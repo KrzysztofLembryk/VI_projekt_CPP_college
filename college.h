@@ -3,6 +3,13 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include <set>
+
+using std::string;
+using std::set;
+using std::unique_ptr;
+using std::make_unique;
 
 class Course
 {
@@ -48,7 +55,7 @@ private:
     std::string surname;
 };
 
-class Student : public Person
+class Student : public virtual Person
 {
 public:
     Student() = delete;
@@ -71,7 +78,7 @@ private:
     bool active;
 };
 
-class Teacher : public Person
+class Teacher : public virtual Person
 {
 public:
     Teacher() = delete;
@@ -87,5 +94,94 @@ public:
 private:
     std::vector<Course> subjects_I_handle;
 };
+
+class PhDStudent : public Student, public Teacher
+{
+public:
+    PhDStudent() = delete;
+    PhDStudent(std::string name, std::string surname, bool is_active = true) :
+        Person(name, surname), Student(name, surname, is_active), Teacher(name, surname)
+    {}
+};
+
+class College
+{
+public:
+    College(){}
+
+
+    template <typename T>
+    bool add_person(const string&, const string&, bool active = true);
+
+    template <typename T>
+    bool add_person(const string&, const string&);
+
+private:
+    set<string> used_names;
+    set<unique_ptr<Person>> people;
+
+    bool check_existence(const string&, const string&);
+
+    template<typename T>
+    concept Person_derived = requires(T a)
+    {
+
+    }
+};
+
+bool College::check_existence(const string& name, const string& surname)
+{
+    string concat = name + "_" + surname;
+    if (used_names.find(concat) != used_names.end())
+    {
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool College::add_person<Student>(const string& name,
+    const string& surname, bool active) {
+    if (check_existence(name, surname))
+    {
+        return false;
+    }
+    else
+    {
+        people.insert(make_unique<Student>(name, surname, active));
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool College::add_person<PhDStudent>(const string& name,
+    const string& surname, bool active) {
+    if (check_existence(name, surname))
+    {
+        return false;
+    }
+    else
+    {
+        people.insert(make_unique<PhDStudent>(name, surname, active));
+        return true;
+    }
+    return false;
+}
+
+template <>
+bool College::add_person<Teacher>(const string& name,
+    const string& surname) {
+    if (check_existence(name, surname))
+    {
+        return false;
+    }
+    else
+    {
+        people.insert(make_unique<Teacher>(name, surname));
+        return true;
+    }
+    return false;
+}
 
 #endif
