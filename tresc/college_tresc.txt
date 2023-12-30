@@ -142,7 +142,7 @@ Rozwiązanie będzie kompilowane poleceniem
 g++ -Wall -Wextra -O2 -std=c++20 *.cc
 
 Pliki rozwiązania należy umieścić w repozytorium w katalogu
-
+    
 grupaN/zadanie6/ab123456+cd123456
 
 lub

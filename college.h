@@ -26,29 +26,37 @@ private:
     bool active;
 };
 
+// Klasa Person jest wirtualna, bo nie mozemy stworzyc obiektu po prostu typu
+// osoba. Ale zapewniamy implementacje getterow, zeby nie duplikowac kodu.
 class Person
 {
 public:
     Person() = delete;
+
     Person(std::string _name, std::string s_name) : name(_name),
                                                     surname(s_name) {}
+    virtual ~Person() = default;
 
-    std::string get_name() const
-    {
-        return name;
-    }
+    virtual std::string get_name() const = 0;
 
-    std::string get_surname() const
-    {
-        return surname;
-    }
+    virtual std::string get_surname() const = 0;
 
 private:
     std::string name;
     std::string surname;
 };
 
-class Student : public Person
+std::string Person::get_name() const
+{
+    return name;
+}
+
+std::string Person::get_surname() const
+{
+    return surname;
+}
+
+class Student : virtual public Person
 {
 public:
     Student() = delete;
@@ -71,7 +79,7 @@ private:
     bool active;
 };
 
-class Teacher : public Person
+class Teacher : virtual public Person
 {
 public:
     Teacher() = delete;
@@ -86,6 +94,11 @@ public:
 
 private:
     std::vector<Course> subjects_I_handle;
+};
+
+class PhDStudent : public Student, public Teacher
+{
+
 };
 
 #endif
