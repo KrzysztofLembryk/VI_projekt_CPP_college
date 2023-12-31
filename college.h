@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <memory>
 
 class Course
 {
@@ -21,6 +22,16 @@ public:
     bool is_active() const
     {
         return active;
+    }
+
+    void change_activeness(bool new_val)
+    {
+        active = new_val;
+    }
+
+    bool equals(Course &c)
+    {
+        return this == &c;
     }
 
 private:
@@ -110,29 +121,51 @@ public:
 
 class College
 {
-    public:
-        College() = default;
+public:
+    College() = default;
 
-        bool add_course(std::string name, bool active = true)
+    bool add_course(std::string name, bool active = true)
+    {
+        if (course_map.find(name) == course_map.end())
         {
-            if(course_map.find(name) == course_map.end())
-            {
-                course_map.emplace(name, Course(name, active));
-                return true;
-            }
+            auto new_course = std::make_shared<Course>(name, active);
+            course_map.emplace(name, new_course);
+            return true;
+        }
+        return false;
+    }
+
+    auto find_courses(std::string pattern)
+    {
+    }
+
+    bool change_course_activeness(const std::shared_ptr<Course> &course,
+                                  bool active) noexcept
+    {
+        auto iter = course_map.find(course->get_name()); 
+
+        if (iter == course_map.end())
             return false;
-        }
 
-        auto find_courses(std::string pattern)
+        // We can get course of the same name that is in our college, but its
+        // a different course, so we change activeness only if adresses are the
+        // same.
+        
+        if (course == iter->second)
         {
-
+            course_map[course->get_name()]->change_activeness(active);
+            return true;
         }
+        std::cout << "Given course has the same name, but diff address\n";
+        return false;
+    }
 
-    private:
-        // Person - identified by name and surname (they are unique)
-        std::map<std::pair<std::string, std::string>, Person> person_map;
-        // Course - identified by its name (name is unique) 
-        std::map<std::string, Course> course_map;
+private:
+    // Person - identified by name and surname (they are unique)
+    std::map<std::pair<std::string, std::string>, 
+        std::shared_ptr<Person>> person_map;
+    // Course - identified by its name (name is unique)
+    std::map<std::string, std::shared_ptr<Course>> course_map;
 };
 
 #endif
