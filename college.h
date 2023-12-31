@@ -74,7 +74,7 @@ public:
         return subjects_I_attend;
     }
 
-private:
+protected:
     std::vector<Course> subjects_I_attend;
     bool active;
 };
@@ -92,12 +92,16 @@ public:
         return subjects_I_handle;
     }
 
-private:
+protected:
     std::vector<Course> subjects_I_handle;
 };
 
 class PhDStudent : public Student, public Teacher
 {
+    public:
+        PhDStudent(std::string name, std::string surname, 
+        bool is_active = true) : Person(name, surname),  {}
+        //Person(name, surname){}
 
 };
 
