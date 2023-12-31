@@ -110,6 +110,24 @@ public:
 
 class College
 {
+    public:
+        College() = default;
+
+        bool add_course(std::string name, bool active = true)
+        {
+            if(course_map.find(name) == course_map.end())
+            {
+                course_map.emplace(name, Course(name, active));
+                return true;
+            }
+            return false;
+        }
+
+        auto find_courses(std::string pattern)
+        {
+
+        }
+
     private:
         // Person - identified by name and surname (they are unique)
         std::map<std::pair<std::string, std::string>, Person> person_map;
