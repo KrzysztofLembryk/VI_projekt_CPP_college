@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
+#include <map>
 
 class Course
 {
@@ -37,9 +39,9 @@ public:
                                                     surname(s_name) {}
     virtual ~Person() = default;
 
-    virtual std::string get_name() const = 0;
+    virtual std::string get_name() const;
 
-    virtual std::string get_surname() const = 0;
+    virtual std::string get_surname() const;
 
 private:
     std::string name;
@@ -56,7 +58,7 @@ std::string Person::get_surname() const
     return surname;
 }
 
-class Student : virtual public Person
+class Student : public virtual Person
 {
 public:
     Student() = delete;
@@ -79,7 +81,7 @@ protected:
     bool active;
 };
 
-class Teacher : virtual public Person
+class Teacher : public virtual Person
 {
 public:
     Teacher() = delete;
@@ -98,11 +100,21 @@ protected:
 
 class PhDStudent : public Student, public Teacher
 {
-    public:
-        PhDStudent(std::string name, std::string surname, 
-        bool is_active = true) : Person(name, surname),  {}
-        //Person(name, surname){}
+public:
+    // Thanks to virtual inheritance, Person constructor invoked only once.
+    PhDStudent(std::string name, std::string surname,
+               bool is_active = true) : Person(name, surname),
+                                        Student(name, surname, is_active),
+                                        Teacher(name, surname) {}
+};
 
+class College
+{
+    private:
+        // Person - identified by name and surname (they are unique)
+        std::map<std::pair<std::string, std::string>, Person> person_map;
+        // Course - identified by its name (name is unique) 
+        std::map<std::string, Course> course_map;
 };
 
 #endif
