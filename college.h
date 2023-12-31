@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <map>
 
 class Course
 {
@@ -105,6 +106,15 @@ public:
                bool is_active = true) : Person(name, surname),
                                         Student(name, surname, is_active),
                                         Teacher(name, surname) {}
+};
+
+class College
+{
+    private:
+        // Person - identified by name and surname (they are unique)
+        std::map<std::pair<std::string, std::string>, Person> person_map;
+        // Course - identified by its name (name is unique) 
+        std::map<std::string, Course> course_map;
 };
 
 #endif
