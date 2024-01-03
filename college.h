@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <set>
 #include <memory>
 
 class Course
@@ -112,6 +113,7 @@ protected:
 class PhDStudent : public Student, public Teacher
 {
 public:
+    PhDStudent() = delete;
     // Thanks to virtual inheritance, Person constructor invoked only once.
     PhDStudent(std::string name, std::string surname,
                bool is_active = true) : Person(name, surname),
@@ -128,8 +130,7 @@ public:
     {
         if (course_map.find(name) == course_map.end())
         {
-            auto new_course = std::make_shared<Course>(name, active);
-            course_map.emplace(name, new_course);
+            course_map.emplace(name, std::make_shared<Course>(name, active));
             return true;
         }
         return false;
@@ -142,7 +143,7 @@ public:
     bool change_course_activeness(const std::shared_ptr<Course> &course,
                                   bool active) noexcept
     {
-        auto iter = course_map.find(course->get_name()); 
+        auto iter = course_map.find(course->get_name());
 
         if (iter == course_map.end())
             return false;
@@ -150,20 +151,67 @@ public:
         // We can get course of the same name that is in our college, but its
         // a different course, so we change activeness only if adresses are the
         // same.
-        
+
         if (course == iter->second)
         {
-            course_map[course->get_name()]->change_activeness(active);
+            iter->second->change_activeness(active);
             return true;
         }
-        std::cout << "Given course has the same name, but diff address\n";
+        std::cout << "change_course_activeness: Given course has the same name, but diff address\n";
         return false;
+    }
+
+    bool remove_course(const std::shared_ptr<Course> &course) noexcept
+    {
+        auto iter = course_map.find(course->get_name());
+
+        if (iter == course_map.end())
+            return false;
+
+        // We can get course of the same name that is in our college, but its
+        // a different course, so we change activeness only if adresses are the
+        // same. Then we erase found elem from our collection. Erase with
+        // iterator throws nothing, find() also throws nothing.
+
+        if (course == iter->second)
+        {
+            iter->second->change_activeness(false);
+            course_map.erase(iter);
+            return true;
+        }
+        std::cout << "remove_course: given course has the same name, but diff address\n";
+        return false;
+    }
+
+    template <typename T>
+    bool add_person(std::string name, std::string surname, bool active = true)
+    {
+    }
+
+    template <>
+    bool add_person<Student>(std::string name, std::string surname,
+                             bool active)
+    {
+    }
+
+    template <>
+    bool add_person<Teacher>(std::string name, std::string surname,
+                             bool active)
+    {
+    }
+
+    template <>
+    bool add_person<PhDStudent>(std::string name, std::string surname,
+                             bool active)
+    {
     }
 
 private:
     // Person - identified by name and surname (they are unique)
-    std::map<std::pair<std::string, std::string>, 
-        std::shared_ptr<Person>> person_map;
+    std::map<std::pair<std::string, std::string>,
+             std::shared_ptr<Person>>
+        person_map;
+
     // Course - identified by its name (name is unique)
     std::map<std::string, std::shared_ptr<Course>> course_map;
 };
