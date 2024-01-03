@@ -216,11 +216,12 @@ public:
 private:
     // Person - identified by name and surname (they are unique)
     std::set<std::shared_ptr<Person>> person_set;
-    std::set<const std::shared_ptr<Person>> person_const_set;
+    //std::set<const std::shared_ptr<Person>> person_const_set;
+    std::set<std::pair<std::string, std::string>> people_names;
 
     // Course - identified by its name (name is unique)
     std::set<std::shared_ptr<Course>> course_set;
-    std::set<const std::shared_ptr<Course>> course_const_set;
+    //std::set<const std::shared_ptr<Course>> course_const_set;
     std::set<std::string> course_names;
 };
 
