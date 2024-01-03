@@ -128,9 +128,10 @@ public:
 
     bool add_course(std::string name, bool active = true)
     {
-        if (course_map.find(name) == course_map.end())
+        if (course_names.find(name) == course_names.end())
         {
-            course_map.emplace(name, std::make_shared<Course>(name, active));
+            course_names.emplace(name);
+            course_set.emplace(std::make_shared<Course>(name, active));
             return true;
         }
         return false;
@@ -143,18 +144,18 @@ public:
     bool change_course_activeness(const std::shared_ptr<Course> &course,
                                   bool active) noexcept
     {
-        auto iter = course_map.find(course->get_name());
+        auto iter = course_set.find(course);
 
-        if (iter == course_map.end())
+        if (iter == course_set.end())
             return false;
 
         // We can get course of the same name that is in our college, but its
         // a different course, so we change activeness only if adresses are the
         // same.
 
-        if (course == iter->second)
+        if (course == *iter)
         {
-            iter->second->change_activeness(active);
+            (*iter)->change_activeness(active);
             return true;
         }
         std::cout << "change_course_activeness: Given course has the same name, but diff address\n";
@@ -163,9 +164,9 @@ public:
 
     bool remove_course(const std::shared_ptr<Course> &course) noexcept
     {
-        auto iter = course_map.find(course->get_name());
+        auto iter = course_set.find(course);
 
-        if (iter == course_map.end())
+        if (iter == course_set.end())
             return false;
 
         // We can get course of the same name that is in our college, but its
@@ -173,10 +174,16 @@ public:
         // same. Then we erase found elem from our collection. Erase with
         // iterator throws nothing, find() also throws nothing.
 
-        if (course == iter->second)
+        if (course == *iter)
         {
-            iter->second->change_activeness(false);
-            course_map.erase(iter);
+            // Firstly we remove name of our course from set of courses names.
+            auto iter_str = course_names.find((*iter)->get_name());
+            course_names.erase(iter_str);
+
+            // Then we remove whole course from courses set.
+            (*iter)->change_activeness(false);
+            course_set.erase(iter);
+
             return true;
         }
         std::cout << "remove_course: given course has the same name, but diff address\n";
@@ -208,12 +215,13 @@ public:
 
 private:
     // Person - identified by name and surname (they are unique)
-    std::map<std::pair<std::string, std::string>,
-             std::shared_ptr<Person>>
-        person_map;
+    std::set<std::shared_ptr<Person>> person_set;
+    std::set<const std::shared_ptr<Person>> person_const_set;
 
     // Course - identified by its name (name is unique)
-    std::map<std::string, std::shared_ptr<Course>> course_map;
+    std::set<std::shared_ptr<Course>> course_set;
+    std::set<const std::shared_ptr<Course>> course_const_set;
+    std::set<std::string> course_names;
 };
 
 #endif
