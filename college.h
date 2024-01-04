@@ -88,6 +88,8 @@ public:
         return subjects_I_attend;
     }
 
+    friend class College;
+
 protected:
     std::vector<Course> subjects_I_attend;
     bool active;
@@ -180,7 +182,7 @@ public:
             auto iter_str = course_names.find((*iter)->get_name());
             course_names.erase(iter_str);
 
-            // Then we remove whole course from courses set.
+            // We change activeness and remove whole course from courses set.
             (*iter)->change_activeness(false);
             course_set.erase(iter);
 
@@ -193,35 +195,53 @@ public:
     template <typename T>
     bool add_person(std::string name, std::string surname, bool active = true)
     {
+        if (people_names.find(std::make_pair(name, surname)) ==
+            people_names.end())
+        {
+            people_names.emplace(std::make_pair(name, surname));
+
+            if constexpr (std::is_same<T, Student>)
+                person_set.emplace(std::make_shared<Student>(name,
+                                                             surname, active));
+            else if constexpr (std::is_same<T, PhDStudent>)
+                person_set.emplace(std::make_shared<PhDStudent>(name,
+                                                                surname, active));
+            else
+                person_set.emplace(std::make_shared<Teacher>(name, surname));
+
+            return true;
+        }
+        return false;
     }
 
-    template <>
-    bool add_person<Student>(std::string name, std::string surname,
-                             bool active)
+    bool change_student_activeness(const std::shared_ptr<Student> &student,
+                                   bool active)
     {
-    }
+        auto iter = person_set.find(student);
 
-    template <>
-    bool add_person<Teacher>(std::string name, std::string surname,
-                             bool active)
-    {
-    }
+        if (iter == person_set.end())
+            return false;
+        
+        // std::string s_name =  (*iter)->get_name();
+        // std::string s_surname = (*iter)->get_surname();
+        // auto iter_name = people_names.find(std::make_pair(s_name, s_surname));
 
-    template <>
-    bool add_person<PhDStudent>(std::string name, std::string surname,
-                             bool active)
-    {
+        (*iter)
+        
+
+
+
     }
 
 private:
     // Person - identified by name and surname (they are unique)
     std::set<std::shared_ptr<Person>> person_set;
-    //std::set<const std::shared_ptr<Person>> person_const_set;
+    // std::set<const std::shared_ptr<Person>> person_const_set;
     std::set<std::pair<std::string, std::string>> people_names;
 
     // Course - identified by its name (name is unique)
     std::set<std::shared_ptr<Course>> course_set;
-    //std::set<const std::shared_ptr<Course>> course_const_set;
+    // std::set<const std::shared_ptr<Course>> course_const_set;
     std::set<std::string> course_names;
 };
 
