@@ -51,6 +51,17 @@ public:
 
     virtual std::string get_surname() const;
 
+protected:
+    using course_const_sp = std::shared_ptr<const Course>;
+
+    struct my_cmp
+    {
+        bool operator()(course_const_sp a, course_const_sp b)
+        {
+            return a->get_name() < b->get_name();
+        }
+    };
+
 private:
     std::string name;
     std::string surname;
@@ -78,7 +89,7 @@ public:
         return active;
     }
 
-    const std::vector<Course> &get_courses() const
+    const auto &get_courses() const
     {
         // we need to sort our vec of subjects when we add them
         return subjects_I_attend;
@@ -87,7 +98,7 @@ public:
     friend class College;
 
 protected:
-    std::vector<Course> subjects_I_attend;
+    std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_attend;
     bool active;
 };
 
@@ -98,14 +109,14 @@ public:
 
     Teacher(std::string name, std::string surname) : Person(name, surname) {}
 
-    const std::vector<Course> &get_courses() const
+    const auto &get_courses() const
     {
         // we need to sort our vec of subjects when we add them
         return subjects_I_handle;
     }
 
 protected:
-    std::vector<Course> subjects_I_handle;
+    std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_handle;
 };
 
 class PhDStudent : public Student, public Teacher
@@ -131,7 +142,7 @@ public:
             auto iter_to_inserted_course = course_set.emplace(std::make_shared<Course>(name, active)).first;
 
             course_names.emplace(name, iter_to_inserted_course);
-            //std::cout << "added course: " << name << "\n";
+            // std::cout << "added course: " << name << "\n";
             return true;
         }
         return false;
@@ -151,7 +162,7 @@ public:
         // We need to make a new set, because we want to return shared pointers
         // that don't allow to modify our courses.
         std::set<course_const_sp, decltype(my_cmp)> matching_courses;
-        
+
         // course_names = map<course name, iterator to course in course_set>
         for (auto iter = course_names.begin(); iter != course_names.end();
              iter++)
@@ -248,8 +259,6 @@ private:
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
 
-
-
     // std::string make_regex_string(const std::string &pattern) const
     // {
     //     std::string regex_str;
@@ -282,8 +291,6 @@ private:
 
     //     return regex_str;
     // }
-
-
 
     bool satisfies_pattern(const std::string &str,
                            const std::string &pattern) const noexcept
@@ -336,16 +343,16 @@ private:
                 // find another *, so we need to come back to previous * that
                 // we remembered and increase matched idx. Basically what we do
                 // is we find how long substring in our str is assigned to *.
-                // i.e. Biology and *o?y we do: 
+                // i.e. Biology and *o?y we do:
                 // 1) match = 0, start_idx = 0, ptrn_idx = 1
                 // 2) o != B but start_idx != -1 so we do match++, ptrn_idx = 1
-                // 3) o != i ---||--- 
+                // 3) o != i ---||---
                 // 4) o == o so we do ptrn_idx++ and str_idx++
                 // 5) ? == l ---||---
                 // 6) y != o but start_idx != -1 so we do match++, ptrn_idx = 1
-                // now match = 3 so currently * = Bio 
+                // now match = 3 so currently * = Bio
                 // 7) o != l so match++, str_idx = match, * = Biol
-                // 8) o == o, 9) ? == g, 10) y == y 
+                // 8) o == o, 9) ? == g, 10) y == y
                 match++;
                 str_idx = match;
                 ptrn_idx = start_Asterisk_Idx + 1;
@@ -354,22 +361,21 @@ private:
             {
                 return false;
             }
-                
         }
 
         // Pattern can be longer than our string so we need to check if in this
         // pattern there arent any characters apart from ? and *.
-        while(ptrn_idx < ptrn_len)
+        while (ptrn_idx < ptrn_len)
         {
-            if(pattern[ptrn_idx] != '*' && pattern[ptrn_idx] != '?')
+            if (pattern[ptrn_idx] != '*' && pattern[ptrn_idx] != '?')
                 return false;
             ptrn_idx++;
         }
 
         // If there are no unchecked characters left in str we found pattern.
-        if(str_idx == str_len)
+        if (str_idx == str_len)
             return true;
-        
+
         return false;
     }
 };
