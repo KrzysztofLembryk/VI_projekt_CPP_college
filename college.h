@@ -145,7 +145,7 @@ public:
     auto find_courses(const std::string &pattern) const
     {
         using course_const_sp = std::shared_ptr<const Course>;
-        
+
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
         auto my_cmp = [](course_const_sp a, course_const_sp b) 
@@ -252,6 +252,38 @@ private:
     // std::set<const std::shared_ptr<Course>> course_const_set;
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
+
+    std::string convert_pattern_to_regex(const std::string &pattern)
+    {
+        std::string regex_str;
+        std::size_t i = 0;
+        std::size_t ptrn_len = pattern.size();
+
+        while(i < ptrn_len)
+        {
+            if(pattern[i] == '*')
+            {
+                while(i < ptrn_len && pattern[i] == '*')
+                    i++;
+                i--;
+                regex_str.push_back('.');
+                regex_str.push_back('*');
+            }
+            else if (pattern[i] == '?')
+            {
+                regex_str.push_back('.');
+                regex_str.push_back('?');
+            }
+            else
+            {
+                regex_str.push_back(pattern[i]);
+            }
+            i++;
+        }
+
+        std::cout << "regex_str: " << regex_str << "\n";
+        return regex_str;
+    }
 
     bool satisfies_pattern(const std::string &str,
                            const std::string &pattern) const noexcept
