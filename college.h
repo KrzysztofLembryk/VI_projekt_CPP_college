@@ -160,13 +160,9 @@ public:
         // a different course, so we change activeness only if adresses are the
         // same.
 
-        if (course == *iter)
-        {
             (*iter)->change_activeness(active);
             return true;
-        }
-        std::cout << "change_course_activeness: Given course has the same name, but diff address\n";
-        return false;
+       
     }
 
     bool remove_course(const std::shared_ptr<Course> &course) noexcept
@@ -181,8 +177,6 @@ public:
         // same. Then we erase found elem from our collection. Erase with
         // iterator throws nothing, find() also throws nothing.
 
-        if (course == *iter)
-        {
             // Firstly we remove name of our course from set of courses names.
             auto iter_str = course_names.find((*iter)->get_name());
             course_names.erase(iter_str);
@@ -192,9 +186,7 @@ public:
             course_set.erase(iter);
 
             return true;
-        }
-        std::cout << "remove_course: given course has the same name, but diff address\n";
-        return false;
+       
     }
 
     template <typename T>
