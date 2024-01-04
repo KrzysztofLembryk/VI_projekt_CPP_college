@@ -144,9 +144,23 @@ public:
 
     // We will do it with O(n) complexity cause we need to check every elem
     // in our set.
-    auto find_courses(const std::string &pattern)
+    auto find_courses(const std::string &pattern) const
     {
-        
+        // We need to make a new set, because we want to return shared pointers
+        // that don't allow to modify our courses.
+        std::set<std::shared_ptr<const Course>> matching_courses;
+
+        // course_names = map<course name, iterator to course in course_set>
+        for(auto iter = course_names.begin(); iter != course_names.end(); 
+            iter++)
+        {
+            if(satisfies_pattern(iter->first, pattern))
+            {
+                matching_courses.emplace(*(iter->second));
+            }
+        }
+
+        return matching_courses;
     }
 
     bool change_course_activeness(const std::shared_ptr<Course> &course,
