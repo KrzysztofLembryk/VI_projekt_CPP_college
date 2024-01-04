@@ -5,6 +5,9 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <set>
+#include <memory>
+#include <regex>
 
 class Course
 {
@@ -21,6 +24,16 @@ public:
     bool is_active() const
     {
         return active;
+    }
+
+    void change_activeness(bool new_val)
+    {
+        active = new_val;
+    }
+
+    bool equals(Course &c)
+    {
+        return this == &c;
     }
 
 private:
@@ -76,6 +89,8 @@ public:
         return subjects_I_attend;
     }
 
+    friend class College;
+
 protected:
     std::vector<Course> subjects_I_attend;
     bool active;
@@ -101,6 +116,7 @@ protected:
 class PhDStudent : public Student, public Teacher
 {
 public:
+    PhDStudent() = delete;
     // Thanks to virtual inheritance, Person constructor invoked only once.
     PhDStudent(std::string name, std::string surname,
                bool is_active = true) : Person(name, surname),
@@ -110,11 +126,125 @@ public:
 
 class College
 {
-    private:
-        // Person - identified by name and surname (they are unique)
-        std::map<std::pair<std::string, std::string>, Person> person_map;
-        // Course - identified by its name (name is unique) 
-        std::map<std::string, Course> course_map;
+public:
+    College() = default;
+
+    bool add_course(std::string name, bool active = true)
+    {
+        if (course_names.find(name) == course_names.end())
+        {
+            auto iter_to_inserted_course = course_set.emplace(std::make_shared<Course>(name, active)).first;
+
+            course_names.emplace(name, iter_to_inserted_course);
+
+            return true;
+        }
+        return false;
+    }
+
+    // We will do it with O(n) complexity cause we need to check every elem
+    // in our set.
+    auto find_courses(const std::string &pattern)
+    {
+    }
+
+    bool change_course_activeness(const std::shared_ptr<Course> &course,
+                                  bool active) noexcept
+    {
+        auto iter = course_set.find(course);
+
+        if (iter == course_set.end())
+            return false;
+
+        (*iter)->change_activeness(active);
+
+        return true;
+    }
+
+    bool remove_course(const std::shared_ptr<Course> &course) noexcept
+    {
+        // Erase with iterator throws nothing, find() also throws nothing.
+        auto iter = course_set.find(course);
+
+        if (iter == course_set.end())
+            return false;
+
+        // Firstly we remove name of our course from set of courses names.
+        auto iter_str = course_names.find((*iter)->get_name());
+        course_names.erase(iter_str);
+
+        // We change activeness and remove whole course from courses set.
+        (*iter)->change_activeness(false);
+        course_set.erase(iter);
+
+        return true;
+    }
+
+    template <typename T>
+    bool add_person(std::string name, std::string surname, bool active = true)
+    {
+        if (people_names.find(std::make_pair(name, surname)) ==
+            people_names.end())
+        {
+            people_names.emplace(std::make_pair(name, surname));
+
+            if constexpr (std::is_same<T, Student>::value)
+                person_set.emplace(std::make_shared<Student>(name,
+                                                             surname, active));
+            else if constexpr (std::is_same<T, PhDStudent>::value)
+                person_set.emplace(std::make_shared<PhDStudent>(name,
+                                                                surname, active));
+            else
+                person_set.emplace(std::make_shared<Teacher>(name, surname));
+
+            return true;
+        }
+        return false;
+    }
+
+    bool change_student_activeness(const std::shared_ptr<Student> &student,
+                                   bool active) noexcept
+    {
+        auto iter = person_set.find(student);
+
+        if (iter == person_set.end())
+            return false;
+
+        // std::string s_name =  (*iter)->get_name();
+        // std::string s_surname = (*iter)->get_surname();
+        // auto iter_name = people_names.find(std::make_pair(s_name, s_surname));
+
+        std::dynamic_pointer_cast<Student>(*iter)->active = active;
+
+        return true;
+    }
+
+private:
+    // Person - identified by name and surname (they are unique)
+    std::set<std::shared_ptr<Person>> person_set;
+    // std::set<const std::shared_ptr<Person>> person_const_set;
+    std::set<std::pair<std::string, std::string>> people_names;
+
+    // Course - identified by its name (name is unique)
+    std::set<std::shared_ptr<Course>> course_set;
+    // std::set<const std::shared_ptr<Course>> course_const_set;
+    std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
+        course_names;
+
+    bool satisfies_pattern(const std::string &str,
+                              const std::string &pattern)
+    {
+        std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
+
+        str_idx = ptrn_idx = 0;
+        ptrn_len = pattern.size();
+        str_len = str.size();
+
+        while(str_idx < str_len && ptrn_idx < ptrn_len)
+        {
+
+        }
+    }
 };
 
 #endif
