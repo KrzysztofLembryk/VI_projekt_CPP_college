@@ -132,8 +132,11 @@ public:
     {
         if (course_names.find(name) == course_names.end())
         {
-            course_names.emplace(name);
-            course_set.emplace(std::make_shared<Course>(name, active));
+            auto iter_to_inserted_course = course_set.emplace
+                (std::make_shared<Course>(name, active)).first;
+
+            course_names.emplace(name, iter_to_inserted_course);
+
             return true;
         }
         return false;
@@ -202,10 +205,10 @@ public:
         {
             people_names.emplace(std::make_pair(name, surname));
 
-            if constexpr (std::is_same<T, Student>)
+            if constexpr (std::is_same<T, Student>::value)
                 person_set.emplace(std::make_shared<Student>(name,
                                                              surname, active));
-            else if constexpr (std::is_same<T, PhDStudent>)
+            else if constexpr (std::is_same<T, PhDStudent>::value)
                 person_set.emplace(std::make_shared<PhDStudent>(name,
                                                                 surname, active));
             else
@@ -242,7 +245,8 @@ private:
     // Course - identified by its name (name is unique)
     std::set<std::shared_ptr<Course>> course_set;
     // std::set<const std::shared_ptr<Course>> course_const_set;
-    std::set<std::string> course_names;
+    std::map<std::string, std::set<std::shared_ptr<Course>>::iterator> 
+        course_names;
 };
 
 #endif

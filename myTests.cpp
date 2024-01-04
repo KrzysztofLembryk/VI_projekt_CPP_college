@@ -19,7 +19,7 @@ int main()
     assert(!college.add_course("Python"));
 
     auto analysis = std::make_shared<Course>("Analysis");
-    college.change_course_activeness(analysis, true);
+    assert(college.change_course_activeness(analysis, true) == false);
 
     return 0;
 }
