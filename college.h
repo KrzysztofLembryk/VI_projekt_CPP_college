@@ -31,11 +31,6 @@ public:
         active = new_val;
     }
 
-    bool equals(Course &c)
-    {
-        return this == &c;
-    }
-
 private:
     std::string course_name;
     bool active;
