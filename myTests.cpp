@@ -4,7 +4,7 @@
 using std::string;
 using std::cout;
 
-bool satisfies_pattern(const std::string &str,
+ bool satisfies_pattern(const std::string &str,
                            const std::string &pattern)
     {
         std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
