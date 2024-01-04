@@ -146,6 +146,7 @@ public:
     // in our set.
     auto find_courses(const std::string &pattern)
     {
+        
     }
 
     bool change_course_activeness(const std::shared_ptr<Course> &course,
@@ -232,16 +233,17 @@ private:
         course_names;
 
     bool satisfies_pattern(const std::string &str,
-                           const std::string &pattern)
+                           const std::string &pattern) const noexcept
     {
         std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
-        std::size_t match, startIdx;
+        std::size_t match;
+        int start_Asterisk_Idx;
 
         str_idx = ptrn_idx = 0;
         ptrn_len = pattern.size();
         str_len = str.size();
         match = 0;
-        startIdx = -1;
+        start_Asterisk_Idx = -1;
 
         while (str_idx < str_len)
         {
@@ -251,9 +253,9 @@ private:
                                         str[str_idx] == pattern[ptrn_idx]))
             {
                 str_idx++;
-                ptrn_idx++;   
+                ptrn_idx++;
             }
-            else if(ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
+            else if (ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
             {
                 // **...** == *
                 while (ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
@@ -266,18 +268,56 @@ private:
                 // characters we have in str are good.
                 if (ptrn_idx == ptrn_len - 1)
                     return true;
-                
-                startIdx = ptrn_idx;
+
+                // We remember idx of last found *, and idx in str when we
+                // found *, we want to be able to come back to them when we
+                // won't find a match in first if, or we won't find another *.
+                start_Asterisk_Idx = ptrn_idx;
+                match = str_idx;
+
+                ptrn_idx++;
+            }
+            else if (start_Asterisk_Idx != -1)
+            {
+                // We didnt find match between str and pattern, also we didnt
+                // find another *, so we need to come back to previous * that
+                // we remembered and increase matched idx. Basically what we do
+                // is we find how long substring in our str is assigned to *.
+                // i.e. Biology and *o?y we do: 
+                // 1) match = 0, start_idx = 0, ptrn_idx = 1
+                // 2) o != B but start_idx != -1 so we do match++, ptrn_idx = 1
+                // 3) o != i ---||--- 
+                // 4) o == o so we do ptrn_idx++ and str_idx++
+                // 5) ? == l ---||---
+                // 6) y != o but start_idx != -1 so we do match++, ptrn_idx = 1
+                // now match = 3 so currently * = Bio 
+                // 7) o != l so match++, str_idx = match, * = Biol
+                // 8) o == o, 9) ? == g, 10) y == y 
+                match++;
+                str_idx = match;
+                ptrn_idx = start_Asterisk_Idx + 1;
+            }
+            else
+            {
+                return false;
             }
                 
-                else
-                {
-                    // *? == *
-                    if (pattern[ptrn_idx + 1] == '?')
-                        ptrn_idx++;
-                }
-            
         }
+
+        // Pattern can be longer than our string so we need to check if in this
+        // pattern there arent any characters apart from ? and *.
+        while(ptrn_idx < ptrn_len)
+        {
+            if(pattern[ptrn_idx] != '*' && pattern[ptrn_idx] != '?')
+                return false;
+            ptrn_idx++;
+        }
+
+        // If there are no unchecked characters left in str we found pattern.
+        if(str_idx == str_len)
+            return true;
+        
+        return false;
     }
 };
 
