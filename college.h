@@ -215,7 +215,7 @@ public:
     }
 
     bool change_student_activeness(const std::shared_ptr<Student> &student,
-                                   bool active)
+                                   bool active) noexcept
     {
         auto iter = person_set.find(student);
 
@@ -226,11 +226,9 @@ public:
         // std::string s_surname = (*iter)->get_surname();
         // auto iter_name = people_names.find(std::make_pair(s_name, s_surname));
 
-        (*iter)
-        
+        std::dynamic_pointer_cast<Student>(*iter)->active = active;
 
-
-
+        return true;
     }
 
 private:
