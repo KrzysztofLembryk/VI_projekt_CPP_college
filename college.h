@@ -156,17 +156,13 @@ public:
         // We need to make a new set, because we want to return shared pointers
         // that don't allow to modify our courses.
         std::set<course_const_sp, decltype(my_cmp)> matching_courses;
-
-        //std::regex regex_pattern(make_regex_string(pattern));
         
         // course_names = map<course name, iterator to course in course_set>
         for (auto iter = course_names.begin(); iter != course_names.end();
              iter++)
         {
-            std::cout << "matching with: " << iter->first << "\n";
             if (satisfies_pattern(iter->first, pattern))
             {
-                std::cout << "inserting\n";
                 matching_courses.emplace(*(iter->second));
             }
         }
@@ -257,38 +253,42 @@ private:
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
 
-    std::string make_regex_string(const std::string &pattern) const
-    {
-        std::string regex_str;
-        std::size_t i = 0;
-        std::size_t ptrn_len = pattern.size();
 
-        while (i < ptrn_len)
-        {
-            if (pattern[i] == '*')
-            {
-                while (i < ptrn_len && pattern[i] == '*')
-                    i++;
-                i--;
-                regex_str.push_back('.');
-                regex_str.push_back('*');
-            }
-            else if (pattern[i] == '?')
-            {
-                regex_str.push_back('.');
-                regex_str.push_back('?');
-            }
-            else
-            {
-                regex_str.push_back(pattern[i]);
-            }
-            i++;
-        }
 
-        std::cout << "regex_str: " << regex_str << "\n";
+    // std::string make_regex_string(const std::string &pattern) const
+    // {
+    //     std::string regex_str;
+    //     std::size_t i = 0;
+    //     std::size_t ptrn_len = pattern.size();
 
-        return regex_str;
-    }
+    //     while (i < ptrn_len)
+    //     {
+    //         if (pattern[i] == '*')
+    //         {
+    //             while (i < ptrn_len && pattern[i] == '*')
+    //                 i++;
+    //             i--;
+    //             regex_str.push_back('.');
+    //             regex_str.push_back('*');
+    //         }
+    //         else if (pattern[i] == '?')
+    //         {
+    //             regex_str.push_back('.');
+    //             regex_str.push_back('?');
+    //         }
+    //         else
+    //         {
+    //             regex_str.push_back(pattern[i]);
+    //         }
+    //         i++;
+    //     }
+
+    //     std::cout << "regex_str: " << regex_str << "\n";
+
+    //     return regex_str;
+    // }
+
+
 
     bool satisfies_pattern(const std::string &str,
                            const std::string &pattern) const noexcept

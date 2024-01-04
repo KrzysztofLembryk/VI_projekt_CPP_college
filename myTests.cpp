@@ -142,7 +142,7 @@ int main()
     size_t i = 0;
     for(auto course : all_courses)
     {
-        cout << i << ", found course: " << course->get_name() << "\n";
+        //cout << i << ", found course: " << course->get_name() << "\n";
         assert(course->get_name() == courses_names[i]);
         i++;
     }
