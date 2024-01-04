@@ -259,6 +259,7 @@ private:
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
 
+    // OLD NOT WORKING REGEX SOLUTION:
     // std::string make_regex_string(const std::string &pattern) const
     // {
     //     std::string regex_str;
