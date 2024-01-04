@@ -56,7 +56,7 @@ protected:
 
     struct my_cmp
     {
-        bool operator()(course_const_sp a, course_const_sp b)
+        bool operator()(course_const_sp &a, course_const_sp &b)
         {
             return a->get_name() < b->get_name();
         }
@@ -154,7 +154,7 @@ public:
 
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
-        auto my_cmp = [](course_const_sp a, course_const_sp b)
+        auto my_cmp = [](course_const_sp &a, course_const_sp &b)
         {
             return a->get_name() < b->get_name();
         };
