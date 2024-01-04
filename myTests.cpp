@@ -7,7 +7,7 @@ int main()
     PhDStudent phd1("Krzys", "Lembrok");
 
     College college;
-
+    
     assert(college.add_course("Analysis"));
     assert(college.add_course("Algebra"));
     assert(college.add_course("Geometry"));

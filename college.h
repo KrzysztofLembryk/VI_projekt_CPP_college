@@ -139,6 +139,8 @@ public:
         return false;
     }
 
+    // We will do it with O(n) complexity cause we need to check every elem 
+    // in our set.
     auto find_courses(std::string pattern)
     {
     }
