@@ -232,17 +232,51 @@ private:
         course_names;
 
     bool satisfies_pattern(const std::string &str,
-                              const std::string &pattern)
+                           const std::string &pattern)
     {
         std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
+        std::size_t match, startIdx;
 
         str_idx = ptrn_idx = 0;
         ptrn_len = pattern.size();
         str_len = str.size();
+        match = 0;
+        startIdx = -1;
 
-        while(str_idx < str_len && ptrn_idx < ptrn_len)
+        while (str_idx < str_len)
         {
+            // If current character in pattern is ? or pattern character and
+            // str character match, we simply do ++ on indexes.
+            if (ptrn_idx < ptrn_len && (pattern[ptrn_idx] == '?' ||
+                                        str[str_idx] == pattern[ptrn_idx]))
+            {
+                str_idx++;
+                ptrn_idx++;   
+            }
+            else if(ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
+            {
+                // **...** == *
+                while (ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
+                    ptrn_idx++;
 
+                ptrn_idx--;
+
+                // If special character * is the last character in pattern
+                // we return true, since it means that all not checked
+                // characters we have in str are good.
+                if (ptrn_idx == ptrn_len - 1)
+                    return true;
+                
+                startIdx = ptrn_idx;
+            }
+                
+                else
+                {
+                    // *? == *
+                    if (pattern[ptrn_idx + 1] == '?')
+                        ptrn_idx++;
+                }
+            
         }
     }
 };
