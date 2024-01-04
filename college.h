@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <regex>
 
 class Course
 {
@@ -132,8 +133,7 @@ public:
     {
         if (course_names.find(name) == course_names.end())
         {
-            auto iter_to_inserted_course = course_set.emplace
-                (std::make_shared<Course>(name, active)).first;
+            auto iter_to_inserted_course = course_set.emplace(std::make_shared<Course>(name, active)).first;
 
             course_names.emplace(name, iter_to_inserted_course);
 
@@ -142,9 +142,9 @@ public:
         return false;
     }
 
-    // We will do it with O(n) complexity cause we need to check every elem 
+    // We will do it with O(n) complexity cause we need to check every elem
     // in our set.
-    auto find_courses(std::string pattern)
+    auto find_courses(const std::string &pattern)
     {
     }
 
@@ -156,37 +156,28 @@ public:
         if (iter == course_set.end())
             return false;
 
-        // We can get course of the same name that is in our college, but its
-        // a different course, so we change activeness only if adresses are the
-        // same.
+        (*iter)->change_activeness(active);
 
-            (*iter)->change_activeness(active);
-            return true;
-       
+        return true;
     }
 
     bool remove_course(const std::shared_ptr<Course> &course) noexcept
     {
+        // Erase with iterator throws nothing, find() also throws nothing.
         auto iter = course_set.find(course);
 
         if (iter == course_set.end())
             return false;
 
-        // We can get course of the same name that is in our college, but its
-        // a different course, so we change activeness only if adresses are the
-        // same. Then we erase found elem from our collection. Erase with
-        // iterator throws nothing, find() also throws nothing.
+        // Firstly we remove name of our course from set of courses names.
+        auto iter_str = course_names.find((*iter)->get_name());
+        course_names.erase(iter_str);
 
-            // Firstly we remove name of our course from set of courses names.
-            auto iter_str = course_names.find((*iter)->get_name());
-            course_names.erase(iter_str);
+        // We change activeness and remove whole course from courses set.
+        (*iter)->change_activeness(false);
+        course_set.erase(iter);
 
-            // We change activeness and remove whole course from courses set.
-            (*iter)->change_activeness(false);
-            course_set.erase(iter);
-
-            return true;
-       
+        return true;
     }
 
     template <typename T>
@@ -218,7 +209,7 @@ public:
 
         if (iter == person_set.end())
             return false;
-        
+
         // std::string s_name =  (*iter)->get_name();
         // std::string s_surname = (*iter)->get_surname();
         // auto iter_name = people_names.find(std::make_pair(s_name, s_surname));
@@ -237,8 +228,23 @@ private:
     // Course - identified by its name (name is unique)
     std::set<std::shared_ptr<Course>> course_set;
     // std::set<const std::shared_ptr<Course>> course_const_set;
-    std::map<std::string, std::set<std::shared_ptr<Course>>::iterator> 
+    std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
+
+    bool satisfies_pattern(const std::string &str,
+                              const std::string &pattern)
+    {
+        std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
+
+        str_idx = ptrn_idx = 0;
+        ptrn_len = pattern.size();
+        str_len = str.size();
+
+        while(str_idx < str_len && ptrn_idx < ptrn_len)
+        {
+
+        }
+    }
 };
 
 #endif
