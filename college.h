@@ -129,26 +129,33 @@ class College
 public:
     College() = default;
 
-    bool add_course(std::string name, bool active = true)
+    bool add_course(const std::string &name, bool active = true)
     {
         if (course_names.find(name) == course_names.end())
         {
             auto iter_to_inserted_course = course_set.emplace(std::make_shared<Course>(name, active)).first;
 
             course_names.emplace(name, iter_to_inserted_course);
-
+            std::cout << "added course: " << name << "\n";
             return true;
         }
         return false;
     }
 
-    // We will do it with O(n) complexity cause we need to check every elem
-    // in our set.
     auto find_courses(const std::string &pattern) const
     {
+        using course_const_sp = std::shared_ptr<const Course>;
+        
+        // We need custom comparator for our set, since we want our courses
+        // in lexycographic order given by their names.
+        auto my_cmp = [](course_const_sp a, course_const_sp b) 
+        { 
+            return a->get_name() < b->get_name();
+        };
+
         // We need to make a new set, because we want to return shared pointers
         // that don't allow to modify our courses.
-        std::set<std::shared_ptr<const Course>> matching_courses;
+        std::set<course_const_sp, decltype(my_cmp)> matching_courses;
 
         // course_names = map<course name, iterator to course in course_set>
         for(auto iter = course_names.begin(); iter != course_names.end(); 

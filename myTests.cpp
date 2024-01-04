@@ -128,7 +128,24 @@ int main()
     assert(satisfies_pattern("Biology", "??????????????"));
     assert(satisfies_pattern("Biology", "*o?o*"));
     assert(!satisfies_pattern("Biology", "*b*"));
-    //satisfies_pattern("Biology", "*b*");
+    
+    // TEST FOR FINDING COURSES
+    auto courses = college.find_courses("C++");
+    assert(courses.size() == 1);
+    assert((*courses.begin())->get_name() == "C++");
+    // (*courses.begin())->change_activeness(false); // gives error since we return set of const shared pointers
+
+    auto all_courses = college.find_courses("*");
+    assert(all_courses.size() == 7);
+    std::vector<string> courses_names{"Algebra", "Analysis", "Biology", "C++",
+    "Geometry", "History", "Python" };
+    size_t i = 0;
+    for(auto course : all_courses)
+    {
+        cout << i << ", found course: " << course->get_name() << "\n";
+        assert(course->get_name() == courses_names[i]);
+        i++;
+    }
 
     return 0;
 }
