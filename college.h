@@ -56,7 +56,7 @@ protected:
 
     struct my_cmp
     {
-        bool operator()(course_const_sp &a, course_const_sp &b)
+        bool operator()(course_const_sp a, course_const_sp b)
         {
             return a->get_name() < b->get_name();
         }
@@ -84,6 +84,8 @@ public:
 
     Student(std::string name, std::string surname, bool is_active = true) : Person(name, surname), active(is_active) {}
 
+    ~Student() = default;
+
     bool is_active() const
     {
         return active;
@@ -91,7 +93,6 @@ public:
 
     const auto &get_courses() const
     {
-        // we need to sort our vec of subjects when we add them
         return subjects_I_attend;
     }
 
@@ -109,9 +110,10 @@ public:
 
     Teacher(std::string name, std::string surname) : Person(name, surname) {}
 
+    ~Teacher() = default;
+
     const auto &get_courses() const
     {
-        // we need to sort our vec of subjects when we add them
         return subjects_I_handle;
     }
 
@@ -148,13 +150,13 @@ public:
         return false;
     }
 
-    auto find_courses(const std::string &pattern) const
+    auto find_courses(const std::string &pattern)
     {
         using course_const_sp = std::shared_ptr<const Course>;
 
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
-        auto my_cmp = [](course_const_sp &a, course_const_sp &b)
+        auto my_cmp = [](course_const_sp a, course_const_sp b)
         {
             return a->get_name() < b->get_name();
         };
