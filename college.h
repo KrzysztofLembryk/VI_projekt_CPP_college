@@ -290,42 +290,31 @@ public:
     }
 
     template <typename T>
-    bool assign_course(const std::shared_ptr<const Person>& person, 
+    bool assign_course(const std::shared_ptr<const Person>& person,
+        const std::shared_ptr<const Course>& course);
+
+    // This covers the usage without the specified template.
+    // I assume that the user knows what he's doing and I'm
+    // not accepting PhDStudent 'cause he is both teacher and student.
+    bool assign_course(const std::shared_ptr<const Person>& person,
         const std::shared_ptr<const Course>& course)
     {
-        // We don't have a comparator for the set, so right now I'm
-        // just looking for the person/course in O(n).
-        auto person_iter = person_set.end();
-        for (auto iter = person_set.begin(); iter != person_set.end();
-            ++iter)
-        {
-            // Address comparison (I thin/hope).
-            if ((*iter) == person) 
-            {
-                person_iter = iter;
-                break;
-            }
-        }
-        if (person_iter == person_set.end())
+        if (!find_person(person) || !find_course(course))
         {
             throw generic_exception();
         }
-        auto course_iter = course_set.end();
-        for (auto iter = course_set.begin(); iter != course_set.end();
-            ++iter)
+        if (std::is_same_v<Student, decltype(*person)>)
         {
-            if ((*iter) == course)
-            {
-                course_iter = iter;
-                break;
-            }
+            
         }
-        if (course_iter == course_set.end())
+        else if (std::is_same_v<Teacher, decltype(*person)>)
+        {
+
+        }
+        else
         {
             throw generic_exception();
         }
-        
-        
         return true;
     }
 
@@ -342,8 +331,8 @@ private:
         course_names;
 
     // Map of people and their courses.
-    std::map<std::shared_ptr<Person>, std::shared_ptr<Course>> student_courses;
-    std::map<std::shared_ptr<Person>, std::shared_ptr<Course>> teacher_courses;
+    std::map<std::shared_ptr<const Person>, std::shared_ptr<const Course>> student_courses;
+    std::map<std::shared_ptr<const Person>, std::shared_ptr<const Course>> teacher_courses;
 
     class generic_exception : public std::exception
     {
@@ -352,6 +341,36 @@ private:
             return "ugabuga";
         }
     };
+
+    bool find_person(const std::shared_ptr<const Person>& person)
+    {
+        for (auto iter = person_set.begin(); iter != person_set.end();
+            ++iter)
+        {
+            // Address comparison (I think/hope).
+            if ((*iter) == person)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool find_course(const std::shared_ptr<const Course>& course)
+    {
+        for (auto iter = course_set.begin(); iter != course_set.end();
+            ++iter)
+        {
+            // Address comparison (I think/hope).
+            if ((*iter) == course)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // OLD NOT WORKING REGEX SOLUTION:
     // std::string make_regex_string(const std::string &pattern) const
@@ -474,5 +493,43 @@ private:
         return false;
     }
 };
+
+template<>
+inline bool College::assign_course<Student>(const std::shared_ptr<const Person>& person,
+    const std::shared_ptr<const Course>& course)
+{
+    if (!find_person(person) || !find_course(course))
+    {
+        throw generic_exception();
+    }
+    const Student* temp_student = dynamic_cast<const Student*>(person.get());
+    if (temp_student == nullptr)
+    {
+        throw generic_exception();
+    }
+    else if (temp_student->is_active())
+    {
+        throw generic_exception();
+    }
+    student_courses[person] = course;
+    return true;
+}
+
+template<>
+inline bool College::assign_course<Teacher>(const std::shared_ptr<const Person>& person,
+    const std::shared_ptr<const Course>& course)
+{
+    if (!find_person(person) || !find_course(course))
+    {
+        throw generic_exception();
+    }
+    const Teacher* temp_teacher = dynamic_cast<const Teacher*>(person.get());
+    if (temp_teacher == nullptr)
+    {
+        throw generic_exception();
+    }
+    teacher_courses[person] = course;
+    return true;
+}
 
 #endif
