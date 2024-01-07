@@ -297,26 +297,7 @@ public:
     // I assume that the user knows what he's doing and I'm
     // not accepting PhDStudent 'cause he is both teacher and student.
     bool assign_course(const std::shared_ptr<const Person>& person,
-        const std::shared_ptr<const Course>& course)
-    {
-        if (!find_person(person) || !find_course(course))
-        {
-            throw generic_exception();
-        }
-        if (std::is_same_v<Student, decltype(*person)>)
-        {
-            
-        }
-        else if (std::is_same_v<Teacher, decltype(*person)>)
-        {
-
-        }
-        else
-        {
-            throw generic_exception();
-        }
-        return true;
-    }
+        const std::shared_ptr<const Course>& course);
 
 private:
     // Person - identified by name and surname (they are unique)
@@ -331,8 +312,12 @@ private:
         course_names;
 
     // Map of people and their courses.
-    std::map<std::shared_ptr<const Person>, std::shared_ptr<const Course>> student_courses;
-    std::map<std::shared_ptr<const Person>, std::shared_ptr<const Course>> teacher_courses;
+    std::map<std::shared_ptr<const Person>, std::set<std::shared_ptr<const Course>>> student_courses;
+    std::map<std::shared_ptr<const Person>, std::set<std::shared_ptr<const Course>>> teacher_courses;
+
+    template<typename T >
+    bool add_course_to_person(const std::shared_ptr<const Person>& person,
+        const std::shared_ptr<const Course>& course);
 
     class generic_exception : public std::exception
     {
@@ -495,6 +480,54 @@ private:
 };
 
 template<>
+inline bool College::add_course_to_person<Teacher>(
+    const std::shared_ptr<const Person>& person,
+    const std::shared_ptr<const Course>& course)
+{
+    if (teacher_courses.contains(person))
+    {
+        if (teacher_courses[person].contains(course))
+        {
+            return false;
+        }
+        else
+        {
+            teacher_courses[person].insert(course);
+        }
+    }
+    else
+    {
+        teacher_courses[person] =
+            std::set<std::shared_ptr<const Course>>{ course };
+    }
+    return true;
+}
+
+template<>
+inline bool College::add_course_to_person<Student>(
+    const std::shared_ptr<const Person>& person,
+    const std::shared_ptr<const Course>& course)
+{
+    if (student_courses.contains(person))
+    {
+        if (student_courses[person].contains(course))
+        {
+            return false;
+        }
+        else
+        {
+            student_courses[person].insert(course);
+        }
+    }
+    else
+    {
+        student_courses[person] =
+            std::set<std::shared_ptr<const Course>>{ course };
+    }
+    return true;
+}
+
+template<>
 inline bool College::assign_course<Student>(const std::shared_ptr<const Person>& person,
     const std::shared_ptr<const Course>& course)
 {
@@ -511,8 +544,7 @@ inline bool College::assign_course<Student>(const std::shared_ptr<const Person>&
     {
         throw generic_exception();
     }
-    student_courses[person] = course;
-    return true;
+    return add_course_to_person<Student>(person, course);
 }
 
 template<>
@@ -528,7 +560,46 @@ inline bool College::assign_course<Teacher>(const std::shared_ptr<const Person>&
     {
         throw generic_exception();
     }
-    teacher_courses[person] = course;
+    return add_course_to_person<Teacher>(person, course);
+}
+
+inline bool College::assign_course(const std::shared_ptr<const Person>& person,
+    const std::shared_ptr<const Course>& course)
+{
+    if (!find_person(person) || !find_course(course))
+    {
+        throw generic_exception();
+    }
+    if (std::is_same_v<Student, decltype(*person)>)
+    {
+        const Student* temp_student = dynamic_cast<const Student*>(person.get());
+        if (temp_student == nullptr)
+        {
+            throw generic_exception();
+        }
+        else if (temp_student->is_active())
+        {
+            throw generic_exception();
+        }
+        return add_course_to_person<Student>(person, course);
+    }
+    else if (std::is_same_v<Teacher, decltype(*person)>)
+    {
+        if (!find_person(person) || !find_course(course))
+        {
+            throw generic_exception();
+        }
+        const Teacher* temp_teacher = dynamic_cast<const Teacher*>(person.get());
+        if (temp_teacher == nullptr)
+        {
+            throw generic_exception();
+        }
+        return add_course_to_person<Teacher>(person, course);
+    }
+    else
+    {
+        throw generic_exception();
+    }
     return true;
 }
 
