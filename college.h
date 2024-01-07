@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <exception>
 #include <regex>
 
 class Course
@@ -219,20 +220,20 @@ public:
             people_names.emplace(std::make_pair(name, surname));
 
             if constexpr (std::is_same<T, Student>::value)
-                person_set.emplace(std::make_shared<Student>(name,
+                person_set.emplace(std::make_shared<const Student>(name,
                                                              surname, active));
             else if constexpr (std::is_same<T, PhDStudent>::value)
-                person_set.emplace(std::make_shared<PhDStudent>(name,
+                person_set.emplace(std::make_shared<const PhDStudent>(name,
                                                                 surname, active));
             else
-                person_set.emplace(std::make_shared<Teacher>(name, surname));
+                person_set.emplace(std::make_shared<const Teacher>(name, surname));
 
             return true;
         }
         return false;
     }
 
-    bool change_student_activeness(const std::shared_ptr<Student> &student,
+    /*bool change_student_activeness(const std::shared_ptr<Student>& student,
                                    bool active) noexcept
     {
         auto iter = person_set.find(student);
@@ -247,7 +248,7 @@ public:
         std::dynamic_pointer_cast<Student>(*iter)->active = active;
 
         return true;
-    }
+    }*/
 
     template <typename T>
     auto find(const std::string& name_pattern, const std::string& surname_pattern) const
@@ -288,9 +289,49 @@ public:
         return matching_people;
     }
 
+    template <typename T>
+    bool assign_course(const std::shared_ptr<const Person>& person, 
+        const std::shared_ptr<const Course>& course)
+    {
+        // We don't have a comparator for the set, so right now I'm
+        // just looking for the person/course in O(n).
+        auto person_iter = person_set.end();
+        for (auto iter = person_set.begin(); iter != person_set.end();
+            ++iter)
+        {
+            // Address comparison (I thin/hope).
+            if ((*iter) == person) 
+            {
+                person_iter = iter;
+                break;
+            }
+        }
+        if (person_iter == person_set.end())
+        {
+            throw generic_exception();
+        }
+        auto course_iter = course_set.end();
+        for (auto iter = course_set.begin(); iter != course_set.end();
+            ++iter)
+        {
+            if ((*iter) == course)
+            {
+                course_iter = iter;
+                break;
+            }
+        }
+        if (course_iter == course_set.end())
+        {
+            throw generic_exception();
+        }
+        
+        
+        return true;
+    }
+
 private:
     // Person - identified by name and surname (they are unique)
-    std::set<std::shared_ptr<Person>> person_set;
+    std::set<std::shared_ptr<const Person>> person_set;
     // std::set<const std::shared_ptr<Person>> person_const_set;
     std::set<std::pair<std::string, std::string>> people_names;
 
@@ -299,6 +340,18 @@ private:
     // std::set<const std::shared_ptr<Course>> course_const_set;
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
+
+    // Map of people and their courses.
+    std::map<std::shared_ptr<Person>, std::shared_ptr<Course>> student_courses;
+    std::map<std::shared_ptr<Person>, std::shared_ptr<Course>> teacher_courses;
+
+    class generic_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "ugabuga";
+        }
+    };
 
     // OLD NOT WORKING REGEX SOLUTION:
     // std::string make_regex_string(const std::string &pattern) const
