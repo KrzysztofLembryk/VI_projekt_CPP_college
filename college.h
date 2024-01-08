@@ -252,6 +252,9 @@ public:
 
     template <typename T>
     auto find(const std::string& name_pattern, const std::string& surname_pattern) const;
+
+    template <typename T>
+    auto find(const std::shared_ptr<const Course>&) const;
     
 
     template <typename T>
@@ -589,12 +592,7 @@ inline bool College::assign_course<Student>(const std::shared_ptr<const Student>
     {
         throw generic_exception();
     }
-    const Student* temp_student = dynamic_cast<const Student*>(person.get());
-    if (temp_student == nullptr)
-    {
-        throw generic_exception();
-    }
-    else if (!temp_student->is_active())
+    else if (!person->is_active())
     {
         throw generic_exception();
     }
@@ -609,11 +607,6 @@ inline bool College::assign_course<Teacher>(const std::shared_ptr<const Teacher>
     {
         throw generic_exception();
     }
-    const Teacher* temp_teacher = dynamic_cast<const Teacher*>(person.get());
-    if (temp_teacher == nullptr)
-    {
-        throw generic_exception();
-    }
     return add_course_to_person<Teacher>(person, course);
 }
 
@@ -621,31 +614,21 @@ template<typename T>
 inline bool College::assign_course(const std::shared_ptr<const T>& person,
     const std::shared_ptr<const Course>& course)
 {
-    if (std::is_same_v<T, Student>)
+    if constexpr (std::is_same_v<T, Student>)
     {
         if (!find_person<Student>(person) || !find_course(course))
         {
             throw generic_exception();
         }
-        const Student* temp_student = dynamic_cast<const Student*>(person.get());
-        if (temp_student == nullptr)
-        {
-            throw generic_exception();
-        }
-        else if (!temp_student->is_active())
+        else if (!person->is_active())
         {
             throw generic_exception();
         }
         return add_course_to_person<Student>(person, course);
     }
-    else if (std::is_same_v<T, Teacher>)
+    else if constexpr (std::is_same_v<T, Teacher>)
     {
         if (!find_person<Teacher>(person) || !find_course(course))
-        {
-            throw generic_exception();
-        }
-        const Teacher* temp_teacher = dynamic_cast<const Teacher*>(person.get());
-        if (temp_teacher == nullptr)
         {
             throw generic_exception();
         }
@@ -661,12 +644,8 @@ inline bool College::assign_course(const std::shared_ptr<const T>& person,
 template<>
 inline auto College::find<Person>(const std::string& name_pattern, const std::string& surname_pattern) const
 {
-    // Result set.
     std::set<std::shared_ptr<const Person>, name_cmp> matching_people;
     find_people<Person>(matching_people, name_pattern, surname_pattern);
-    //find_people<Student>(matching_people, name_pattern, surname_pattern);
-    //find_people<Teacher>(matching_people, name_pattern, surname_pattern);
-    //find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
 
     return matching_people;
 }
@@ -676,7 +655,6 @@ inline auto College::find<Student>(const std::string& name_pattern, const std::s
 {
     std::set<std::shared_ptr<const Student>, name_cmp> matching_people;
     find_people<Student>(matching_people, name_pattern, surname_pattern);
-    //find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
     return matching_people;
 }
 
@@ -685,7 +663,6 @@ inline auto College::find<Teacher>(const std::string& name_pattern, const std::s
 {
     std::set<std::shared_ptr<const Teacher>, name_cmp> matching_people;
     find_people<Teacher>(matching_people, name_pattern, surname_pattern);
-    //find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
     return matching_people;
 }
 
