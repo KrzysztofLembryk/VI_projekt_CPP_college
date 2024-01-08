@@ -15,7 +15,7 @@ class Course
 public:
     Course() = delete;
     Course(std::string name, bool is_active = true) : course_name(name),
-                                                      active(is_active) {}
+        active(is_active) {}
 
     std::string get_name() const
     {
@@ -45,7 +45,7 @@ public:
     Person() = delete;
 
     Person(std::string _name, std::string s_name) : name(_name),
-                                                    surname(s_name) {}
+        surname(s_name) {}
     virtual ~Person() = default;
 
     virtual std::string get_name() const;
@@ -92,7 +92,7 @@ public:
         return active;
     }
 
-    const auto &get_courses() const
+    const auto& get_courses() const
     {
         return subjects_I_attend;
     }
@@ -113,7 +113,7 @@ public:
 
     ~Teacher() = default;
 
-    const auto &get_courses() const
+    const auto& get_courses() const
     {
         return subjects_I_handle;
     }
@@ -128,9 +128,9 @@ public:
     PhDStudent() = delete;
     // Thanks to virtual inheritance, Person constructor invoked only once.
     PhDStudent(std::string name, std::string surname,
-               bool is_active = true) : Person(name, surname),
-                                        Student(name, surname, is_active),
-                                        Teacher(name, surname) {}
+        bool is_active = true) : Person(name, surname),
+        Student(name, surname, is_active),
+        Teacher(name, surname) {}
 };
 
 class College
@@ -138,7 +138,7 @@ class College
 public:
     College() = default;
 
-    bool add_course(const std::string &name, bool active = true)
+    bool add_course(const std::string& name, bool active = true)
     {
         if (course_names.find(name) == course_names.end())
         {
@@ -151,7 +151,7 @@ public:
         return false;
     }
 
-    auto find_courses(const std::string &pattern)
+    auto find_courses(const std::string& pattern)
     {
         using course_const_sp = std::shared_ptr<const Course>;
 
@@ -168,7 +168,7 @@ public:
 
         // course_names = map<course name, iterator to course in course_set>
         for (auto iter = course_names.begin(); iter != course_names.end();
-             iter++)
+            iter++)
         {
             if (satisfies_pattern(iter->first, pattern))
             {
@@ -179,8 +179,8 @@ public:
         return matching_courses;
     }
 
-    bool change_course_activeness(const std::shared_ptr<Course> &course,
-                                  bool active) noexcept
+    bool change_course_activeness(const std::shared_ptr<Course>& course,
+        bool active) noexcept
     {
         auto iter = course_set.find(course);
 
@@ -192,7 +192,7 @@ public:
         return true;
     }
 
-    bool remove_course(const std::shared_ptr<Course> &course) noexcept
+    bool remove_course(const std::shared_ptr<Course>& course) noexcept
     {
         // Erase with iterator throws nothing, find() also throws nothing.
         auto iter = course_set.find(course);
@@ -220,13 +220,13 @@ public:
             people_names.emplace(std::make_pair(name, surname));
 
             if constexpr (std::is_same<T, Student>::value)
-                person_set.emplace(std::make_shared<const Student>(name,
-                                                             surname, active));
+                student_set.emplace(std::make_shared<const Student>(name,
+                    surname, active));
             else if constexpr (std::is_same<T, PhDStudent>::value)
-                person_set.emplace(std::make_shared<const PhDStudent>(name,
-                                                                surname, active));
+                phd_set.emplace(std::make_shared<const PhDStudent>(name,
+                    surname, active));
             else
-                person_set.emplace(std::make_shared<const Teacher>(name, surname));
+                teacher_set.emplace(std::make_shared<const Teacher>(name, surname));
 
             return true;
         }
@@ -251,57 +251,18 @@ public:
     }*/
 
     template <typename T>
-    auto find(const std::string& name_pattern, const std::string& surname_pattern) const
-    {
-        using person_const_sp = std::shared_ptr<const Person>;
-
-        // Custom lexicographical comparator for our result set.
-        auto name_cmp = [](person_const_sp a, person_const_sp b)
-        {
-            if (a->get_surname() != b->get_surname()) 
-            {
-                return a->get_surname() < b->get_surname();
-            }
-            else 
-            {
-                return a->get_name() < b->get_name();
-            }
-        };
-
-        // Result set.
-        std::set<person_const_sp, decltype(name_cmp)> matching_people;
-
-        for (auto iter = person_set.begin(); iter != person_set.end();
-            ++iter)
-        {
-            if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-                satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
-                // If dynamic cast succedeed, it means that a person under the iter
-                // matches our generic type T.
-                const T* target = dynamic_cast<const T*>(iter->get());
-                if (target != nullptr)
-                {
-                    matching_people.emplace(*iter);
-                }
-            }
-        }
-
-        return matching_people;
-    }
+    auto find(const std::string& name_pattern, const std::string& surname_pattern) const;
+    
 
     template <typename T>
-    bool assign_course(const std::shared_ptr<const Person>& person,
-        const std::shared_ptr<const Course>& course);
-
-    // This covers the usage without the specified template.
-    // I assume that the user knows what he's doing and I'm
-    // not accepting PhDStudent 'cause he is both teacher and student.
-    bool assign_course(const std::shared_ptr<const Person>& person,
+    bool assign_course(const std::shared_ptr<const T>& person,
         const std::shared_ptr<const Course>& course);
 
 private:
     // Person - identified by name and surname (they are unique)
-    std::set<std::shared_ptr<const Person>> person_set;
+    std::set<std::shared_ptr<const Student>> student_set;
+    std::set<std::shared_ptr<const Teacher>> teacher_set;
+    std::set<std::shared_ptr<const PhDStudent>> phd_set;
     // std::set<const std::shared_ptr<Person>> person_const_set;
     std::set<std::pair<std::string, std::string>> people_names;
 
@@ -315,6 +276,20 @@ private:
     std::map<std::shared_ptr<const Person>, std::set<std::shared_ptr<const Course>>> student_courses;
     std::map<std::shared_ptr<const Person>, std::set<std::shared_ptr<const Course>>> teacher_courses;
 
+    struct name_cmp {
+        bool operator() (std::shared_ptr<const Person> a, std::shared_ptr<const Person> b) const
+        {
+            if (a->get_surname() != b->get_surname())
+            {
+                return a->get_surname() < b->get_surname();
+            }
+            else
+            {
+                return a->get_name() < b->get_name();
+            }
+        }
+    };
+
     template<typename T >
     bool add_course_to_person(const std::shared_ptr<const Person>& person,
         const std::shared_ptr<const Course>& course);
@@ -327,12 +302,37 @@ private:
         }
     };
 
+    template<typename T>
+    void find_people(std::set<std::shared_ptr<const T>, name_cmp>&, const std::string&, const std::string&) const;
+
+    template<typename T>
     bool find_person(const std::shared_ptr<const Person>& person)
     {
-        for (auto iter = person_set.begin(); iter != person_set.end();
+        if (std::is_same_v<T, Student>)
+        {
+            for (auto iter = student_set.begin(); iter != student_set.end();
+                ++iter)
+            {
+                if ((*iter) == person)
+                {
+                    return true;
+                }
+            }
+        }
+        else if (std::is_same_v<T, Teacher>)
+        {
+            for (auto iter = teacher_set.begin(); iter != teacher_set.end();
+                ++iter)
+            {
+                if ((*iter) == person)
+                {
+                    return true;
+                }
+            }
+        }
+        for (auto iter = phd_set.begin(); iter != phd_set.end();
             ++iter)
         {
-            // Address comparison (I think/hope).
             if ((*iter) == person)
             {
                 return true;
@@ -357,42 +357,8 @@ private:
         return false;
     }
 
-    // OLD NOT WORKING REGEX SOLUTION:
-    // std::string make_regex_string(const std::string &pattern) const
-    // {
-    //     std::string regex_str;
-    //     std::size_t i = 0;
-    //     std::size_t ptrn_len = pattern.size();
-
-    //     while (i < ptrn_len)
-    //     {
-    //         if (pattern[i] == '*')
-    //         {
-    //             while (i < ptrn_len && pattern[i] == '*')
-    //                 i++;
-    //             i--;
-    //             regex_str.push_back('.');
-    //             regex_str.push_back('*');
-    //         }
-    //         else if (pattern[i] == '?')
-    //         {
-    //             regex_str.push_back('.');
-    //             regex_str.push_back('?');
-    //         }
-    //         else
-    //         {
-    //             regex_str.push_back(pattern[i]);
-    //         }
-    //         i++;
-    //     }
-
-    //     std::cout << "regex_str: " << regex_str << "\n";
-
-    //     return regex_str;
-    // }
-
-    bool satisfies_pattern(const std::string &str,
-                           const std::string &pattern) const noexcept
+    bool satisfies_pattern(const std::string& str,
+        const std::string& pattern) const noexcept
     {
         std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
         std::size_t match;
@@ -409,7 +375,7 @@ private:
             // If current character in pattern is ? or pattern character and
             // str character match, we simply do ++ on indexes.
             if (ptrn_idx < ptrn_len && (pattern[ptrn_idx] == '?' ||
-                                        str[str_idx] == pattern[ptrn_idx]))
+                str[str_idx] == pattern[ptrn_idx]))
             {
                 str_idx++;
                 ptrn_idx++;
@@ -504,6 +470,94 @@ inline bool College::add_course_to_person<Teacher>(
 }
 
 template<>
+inline void College::find_people<Person>(std::set<std::shared_ptr<const Person>, name_cmp>& people,
+    const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    for (auto iter = student_set.begin(); iter != student_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+    for (auto iter = teacher_set.begin(); iter != teacher_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+    for (auto iter = phd_set.begin(); iter != phd_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+}
+
+template<>
+inline void College::find_people<Student>(std::set<std::shared_ptr<const Student>, name_cmp>& people,
+    const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    for (auto iter = student_set.begin(); iter != student_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+    for (auto iter = phd_set.begin(); iter != phd_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+}
+
+template<>
+inline void College::find_people<Teacher>(std::set<std::shared_ptr<const Teacher>, name_cmp>& people,
+    const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    for (auto iter = teacher_set.begin(); iter != teacher_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+    for (auto iter = phd_set.begin(); iter != phd_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+}
+
+template<>
+inline void College::find_people<PhDStudent>(std::set<std::shared_ptr<const PhDStudent>, name_cmp>& people,
+    const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    for (auto iter = phd_set.begin(); iter != phd_set.end();
+        ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+            people.emplace(*iter);
+        }
+    }
+}
+
+template<>
 inline bool College::add_course_to_person<Student>(
     const std::shared_ptr<const Person>& person,
     const std::shared_ptr<const Course>& course)
@@ -528,10 +582,10 @@ inline bool College::add_course_to_person<Student>(
 }
 
 template<>
-inline bool College::assign_course<Student>(const std::shared_ptr<const Person>& person,
+inline bool College::assign_course<Student>(const std::shared_ptr<const Student>& person,
     const std::shared_ptr<const Course>& course)
 {
-    if (!find_person(person) || !find_course(course))
+    if (!find_person<Student>(person) || !find_course(course))
     {
         throw generic_exception();
     }
@@ -540,7 +594,7 @@ inline bool College::assign_course<Student>(const std::shared_ptr<const Person>&
     {
         throw generic_exception();
     }
-    else if (temp_student->is_active())
+    else if (!temp_student->is_active())
     {
         throw generic_exception();
     }
@@ -548,10 +602,10 @@ inline bool College::assign_course<Student>(const std::shared_ptr<const Person>&
 }
 
 template<>
-inline bool College::assign_course<Teacher>(const std::shared_ptr<const Person>& person,
+inline bool College::assign_course<Teacher>(const std::shared_ptr<const Teacher>& person,
     const std::shared_ptr<const Course>& course)
 {
-    if (!find_person(person) || !find_course(course))
+    if (!find_person<Teacher>(person) || !find_course(course))
     {
         throw generic_exception();
     }
@@ -563,29 +617,30 @@ inline bool College::assign_course<Teacher>(const std::shared_ptr<const Person>&
     return add_course_to_person<Teacher>(person, course);
 }
 
-inline bool College::assign_course(const std::shared_ptr<const Person>& person,
+template<typename T>
+inline bool College::assign_course(const std::shared_ptr<const T>& person,
     const std::shared_ptr<const Course>& course)
 {
-    if (!find_person(person) || !find_course(course))
+    if (std::is_same_v<T, Student>)
     {
-        throw generic_exception();
-    }
-    if (std::is_same_v<Student, decltype(*person)>)
-    {
+        if (!find_person<Student>(person) || !find_course(course))
+        {
+            throw generic_exception();
+        }
         const Student* temp_student = dynamic_cast<const Student*>(person.get());
         if (temp_student == nullptr)
         {
             throw generic_exception();
         }
-        else if (temp_student->is_active())
+        else if (!temp_student->is_active())
         {
             throw generic_exception();
         }
         return add_course_to_person<Student>(person, course);
     }
-    else if (std::is_same_v<Teacher, decltype(*person)>)
+    else if (std::is_same_v<T, Teacher>)
     {
-        if (!find_person(person) || !find_course(course))
+        if (!find_person<Teacher>(person) || !find_course(course))
         {
             throw generic_exception();
         }
@@ -601,6 +656,45 @@ inline bool College::assign_course(const std::shared_ptr<const Person>& person,
         throw generic_exception();
     }
     return true;
+}
+
+template<>
+inline auto College::find<Person>(const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    // Result set.
+    std::set<std::shared_ptr<const Person>, name_cmp> matching_people;
+    find_people<Person>(matching_people, name_pattern, surname_pattern);
+    //find_people<Student>(matching_people, name_pattern, surname_pattern);
+    //find_people<Teacher>(matching_people, name_pattern, surname_pattern);
+    //find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
+
+    return matching_people;
+}
+
+template<>
+inline auto College::find<Student>(const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    std::set<std::shared_ptr<const Student>, name_cmp> matching_people;
+    find_people<Student>(matching_people, name_pattern, surname_pattern);
+    //find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
+    return matching_people;
+}
+
+template<>
+inline auto College::find<Teacher>(const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    std::set<std::shared_ptr<const Teacher>, name_cmp> matching_people;
+    find_people<Teacher>(matching_people, name_pattern, surname_pattern);
+    //find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
+    return matching_people;
+}
+
+template<>
+inline auto College::find<PhDStudent>(const std::string& name_pattern, const std::string& surname_pattern) const
+{
+    std::set<std::shared_ptr<const PhDStudent>, name_cmp> matching_people;
+    find_people<PhDStudent>(matching_people, name_pattern, surname_pattern);
+    return matching_people;
 }
 
 #endif
