@@ -118,6 +118,8 @@ public:
         return subjects_I_handle;
     }
 
+    friend class College;
+
 protected:
     std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_handle;
 };
@@ -462,6 +464,7 @@ inline bool College::add_course_to_person<Student>(
         else
         {
             student_courses[person].insert(course);
+            person->subjects_I_attend.insert(course);
         }
     }
     else
