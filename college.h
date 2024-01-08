@@ -276,8 +276,8 @@ private:
         course_names;
 
     // Map of people and their courses.
-    std::map<std::shared_ptr<const Person>, std::set<std::shared_ptr<const Course>>> student_courses;
-    std::map<std::shared_ptr<const Person>, std::set<std::shared_ptr<const Course>>> teacher_courses;
+    std::map<std::shared_ptr<const Student>, std::set<std::shared_ptr<const Course>>> student_courses;
+    std::map<std::shared_ptr<const Teacher>, std::set<std::shared_ptr<const Course>>> teacher_courses;
 
     struct name_cmp {
         bool operator() (std::shared_ptr<const Person> a, std::shared_ptr<const Person> b) const
@@ -293,8 +293,8 @@ private:
         }
     };
 
-    template<typename T >
-    bool add_course_to_person(const std::shared_ptr<const Person>& person,
+    template<typename T>
+    bool add_course_to_person(const std::shared_ptr<const T>& person,
         const std::shared_ptr<const Course>& course);
 
     class generic_exception : public std::exception
@@ -449,8 +449,32 @@ private:
 };
 
 template<>
+inline bool College::add_course_to_person<Student>(
+    const std::shared_ptr<const Student>& person,
+    const std::shared_ptr<const Course>& course)
+{
+    if (student_courses.contains(person))
+    {
+        if (student_courses[person].contains(course))
+        {
+            return false;
+        }
+        else
+        {
+            student_courses[person].insert(course);
+        }
+    }
+    else
+    {
+        student_courses[person] =
+            std::set<std::shared_ptr<const Course>>{ course };
+    }
+    return true;
+}
+
+template<>
 inline bool College::add_course_to_person<Teacher>(
-    const std::shared_ptr<const Person>& person,
+    const std::shared_ptr<const Teacher>& person,
     const std::shared_ptr<const Course>& course)
 {
     if (teacher_courses.contains(person))
@@ -561,30 +585,6 @@ inline void College::find_people<PhDStudent>(std::set<std::shared_ptr<const PhDS
 }
 
 template<>
-inline bool College::add_course_to_person<Student>(
-    const std::shared_ptr<const Person>& person,
-    const std::shared_ptr<const Course>& course)
-{
-    if (student_courses.contains(person))
-    {
-        if (student_courses[person].contains(course))
-        {
-            return false;
-        }
-        else
-        {
-            student_courses[person].insert(course);
-        }
-    }
-    else
-    {
-        student_courses[person] =
-            std::set<std::shared_ptr<const Course>>{ course };
-    }
-    return true;
-}
-
-template<>
 inline bool College::assign_course<Student>(const std::shared_ptr<const Student>& person,
     const std::shared_ptr<const Course>& course)
 {
@@ -647,6 +647,36 @@ inline auto College::find<Person>(const std::string& name_pattern, const std::st
     std::set<std::shared_ptr<const Person>, name_cmp> matching_people;
     find_people<Person>(matching_people, name_pattern, surname_pattern);
 
+    return matching_people;
+}
+
+template<>
+inline auto College::find<Student>(const std::shared_ptr<const Course>& course) const
+{
+    std::set<std::shared_ptr<const Student>, name_cmp> matching_people;
+    for (auto iter = student_courses.begin(); iter != student_courses.end();
+        ++iter)
+    {
+        if (iter->second.contains(course))
+        {
+            matching_people.insert(iter->first);
+        }
+    }
+    return matching_people;
+}
+
+template<>
+inline auto College::find<Teacher>(const std::shared_ptr<const Course>& course) const
+{
+    std::set<std::shared_ptr<const Teacher>, name_cmp> matching_people;
+    for (auto iter = teacher_courses.begin(); iter != teacher_courses.end();
+        ++iter)
+    {
+        if (iter->second.contains(course))
+        {
+            matching_people.insert(iter->first);
+        }
+    }
     return matching_people;
 }
 
