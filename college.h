@@ -152,18 +152,16 @@ public:
 
     auto find_courses(const std::string &pattern)
     {
-        using course_const_sp = std::shared_ptr<const Course>;
-
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
-        auto my_cmp = [](course_const_sp a, course_const_sp b)
+        auto my_cmp = [](std::shared_ptr<Course> a, std::shared_ptr<Course> b)
         {
             return a->get_name() < b->get_name();
         };
 
         // We need to make a new set, because we want to return shared pointers
         // that don't allow to modify our courses.
-        std::set<course_const_sp, decltype(my_cmp)> matching_courses;
+        std::set<std::shared_ptr<Course>, decltype(my_cmp)> matching_courses;
 
         // course_names = map<course name, iterator to course in course_set>
         for (auto iter = course_names.begin(); iter != course_names.end();

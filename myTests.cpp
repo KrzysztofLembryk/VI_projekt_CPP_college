@@ -146,6 +146,17 @@ int main()
         i++;
     }
 
+    // Check if finding via comparing shared ptrs works when there are two
+    // different ptrs to the same subject
+    auto ALGEBRA_2 = std::make_shared<Course>("Algebra");
+    assert(!college.change_course_activeness(ALGEBRA_2, false));
+
+    // We change ALGEBRA activennes, then remove it
+    assert(college.change_course_activeness(*all_courses.begin(), false));
+    assert(!(*all_courses.begin())->is_active());
+    college.remove_course(*all_courses.begin());
+    assert(college.find_courses("Algebra").size() == 0);
+
     assert(college.add_person<Student>("Jan", "Kowalski"));
     assert(!college.add_person<Teacher>("Jan", "Kowalski"));
     assert(college.add_person<Student>("Pawel", "Kowalski", false));
