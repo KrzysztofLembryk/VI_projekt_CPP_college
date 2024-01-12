@@ -296,10 +296,7 @@ public:
      * constructors need active parameter while others don't.
      */
     template <typename T>
-    bool add_person(std::string name, std::string surname, bool active = true)
-    {
-        return false;
-    }
+    bool add_person(std::string name, std::string surname, bool active = true);
 
     /**
      * Function finds given student by comparing shared pointers in college 
@@ -364,8 +361,7 @@ public:
     }
 
     template <typename T>
-    auto find(const std::shared_ptr<Course> &course)
-    {}
+    auto find(const std::shared_ptr<Course>& course);
 
     /**
     * Functions assigns the given course to the given person, as long as both
