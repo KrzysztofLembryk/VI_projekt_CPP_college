@@ -9,13 +9,14 @@
 #include <memory>
 #include <regex>
 #include <concepts>
+#include <exception>
 
 class Course
 {
 public:
     Course() = delete;
     Course(std::string name, bool is_active = true) : course_name(name),
-                                                      active(is_active) {}
+        active(is_active) {}
 
     std::string get_name() const
     {
@@ -43,7 +44,7 @@ public:
     Person() = delete;
 
     Person(std::string _name, std::string s_name) : name(_name),
-                                                    surname(s_name) {}
+        surname(s_name) {}
     virtual ~Person() = default;
 
     virtual std::string get_name() const noexcept
@@ -59,10 +60,35 @@ public:
 protected:
     // using course_const_sp = std::shared_ptr<Course>;
 
+    struct people_cmp
+    {
+        bool operator()(const std::shared_ptr<Person> a,
+            const std::shared_ptr<Person> b) const
+        {
+            if (a->get_name() != b->get_name())
+            {
+                return a->get_name() < b->get_name();
+            }
+            else
+            {
+                return a->get_surname() < b->get_surname();
+            }
+        }
+    };
+
     struct my_cmp
     {
         bool operator()(const std::shared_ptr<Course> a,
-                        const std::shared_ptr<Course> b)
+            const std::shared_ptr<Course> b) const
+        {
+            return a->get_name() < b->get_name();
+        }
+    };
+
+    struct my_cmp_const
+    {
+        bool operator()(const std::shared_ptr<const Course> a,
+            const std::shared_ptr<const Course> b) const
         {
             return a->get_name() < b->get_name();
         }
@@ -87,15 +113,16 @@ public:
         return active;
     }
 
-    const auto &get_courses() const
+    const auto& get_courses() const
     {
-        return subjects_I_attend;
+        return subjects_I_attend_const;
     }
 
     friend class College;
 
 protected:
-    std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_attend;
+    std::set<std::shared_ptr<const Course>, my_cmp_const> subjects_I_attend_const;
+    std::set<std::shared_ptr<Course>, my_cmp> subjects_I_attend;
     bool active;
 };
 
@@ -108,15 +135,18 @@ public:
 
     ~Teacher() = default;
 
-    const auto &get_courses() const
+    const auto& get_courses() const
     {
-        return subjects_I_handle;
+        return subjects_I_handle_const;
     }
 
     friend class College;
 
+    friend class College;
+
 protected:
-    std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_handle;
+    std::set<std::shared_ptr<const Course>, my_cmp_const> subjects_I_handle_const;
+    std::set<std::shared_ptr<Course>, my_cmp> subjects_I_handle;
 };
 
 class PhDStudent : public Student, public Teacher
@@ -154,6 +184,18 @@ bool constexpr is_type_academic<PhDStudent>() { return true; }
 template <typename T>
 concept IsAcademic = is_type_academic<T>();
 
+template <typename T>
+bool constexpr is_student_teacher() { return false; }
+
+template <>
+bool constexpr is_student_teacher<Student>() { return true; }
+
+template <>
+bool constexpr is_student_teacher<Teacher>() { return true; }
+
+template <typename T>
+concept StudentTeacher = is_student_teacher<T>();
+
 class College
 {
 public:
@@ -172,6 +214,7 @@ public:
 
             course_names.emplace(name, iter_to_inserted_course);
 
+
             return true;
         }
         return false;
@@ -187,6 +230,7 @@ public:
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
         auto my_cmp = [](std::shared_ptr<Course> a, std::shared_ptr<Course> b)
+        auto my_cmp = [](std::shared_ptr<Course> a, std::shared_ptr<Course> b)
         {
             return a->get_name() < b->get_name();
         };
@@ -194,10 +238,13 @@ public:
         // We need to make a new set, cause we can get many different patterns
         // so each time we have to make new set of found elems and return it.
         std::set<std::shared_ptr<Course>, decltype(my_cmp)> matching_courses;
+        // We need to make a new set, cause we can get many different patterns
+        // so each time we have to make new set of found elems and return it.
+        std::set<std::shared_ptr<Course>, decltype(my_cmp)> matching_courses;
 
         // course_names = map<course name, iterator to course in course_set>
         for (auto iter = course_names.begin(); iter != course_names.end();
-             iter++)
+            iter++)
         {
             if (satisfies_pattern(iter->first, pattern))
                 matching_courses.emplace(*(iter->second));
@@ -206,8 +253,8 @@ public:
         return matching_courses;
     }
 
-    bool change_course_activeness(const std::shared_ptr<Course> &course,
-                                  bool active) noexcept
+    bool change_course_activeness(const std::shared_ptr<Course>& course,
+        bool active) noexcept
     {
         auto iter = course_set.find(course);
 
@@ -234,6 +281,7 @@ public:
             return false;
 
         // Firstly we remove name of our course from set of courses names.
+        // We need iterator so that it is noexcept.
         // We need iterator so that it is noexcept.
         auto iter_str = course_names.find((*iter)->get_name());
         course_names.erase(iter_str);
@@ -289,14 +337,20 @@ public:
         // Custom lexicographical comparator for our result set. Sorted by 
         // surname then name.
         auto name_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b)
+        // Custom lexicographical comparator for our result set. Sorted by 
+        // surname then name.
+        auto name_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b)
         {
             if (a->get_surname() != b->get_surname())
+            if (a->get_surname() != b->get_surname())
                 return a->get_surname() < b->get_surname();
+            else
             else
                 return a->get_name() < b->get_name();
         };
 
         // Result set.
+        std::set<std::shared_ptr<T>, decltype(name_cmp)> matching_people;
         std::set<std::shared_ptr<T>, decltype(name_cmp)> matching_people;
 
         for (auto iter = person_set.begin(); iter != person_set.end();
@@ -313,12 +367,80 @@ public:
                     matching_people.emplace(found_person);
             }
         }
+                satisfies_pattern((*iter)->get_surname(), surname_pattern))
+            {
+                auto found_person = std::dynamic_pointer_cast<T>(*iter);
+                // We need to check if cast was successful meaning != nullptr,
+                // cause we cannot cast i.e. teacher to student. If it was
+                // successful it means that *iter type matches type T.
+                if (found_person != nullptr)
+                    matching_people.emplace(found_person);
+            }
+        }
         return matching_people;
+    }
+
+    template <typename T>
+    auto find(const std::shared_ptr<Course>& course);
+
+    template <StudentTeacher T>
+    bool assign_course(const std::shared_ptr<T>& person, 
+        const std::shared_ptr<Course>& course)
+    {
+        if (!person_set.contains(person))
+        {
+            throw non_existing_person_exception();
+        }
+        else if (!course_set.contains(course))
+        {
+            throw non_existing_course_exception();
+        }
+        if (!course->is_active())
+        {
+            throw inactive_course_exception();
+        }
+        Student* temp_student = dynamic_cast<Student*>(person.get());
+        Teacher* temp_teacher = dynamic_cast<Teacher*>(person.get());
+        if (temp_student != nullptr)
+        {
+            if (!temp_student->is_active())
+            {
+                throw inactive_student_exception();
+            }
+            if (temp_student->subjects_I_attend.contains(course))
+            {
+                return false;
+            }
+            else
+            {
+                temp_student->subjects_I_attend.emplace(course);
+                temp_student->subjects_I_attend_const.emplace(
+                    std::make_shared<const Course>(course->get_name(), course->is_active()));
+                return true;
+            }
+        }
+        else if (temp_teacher != nullptr)
+        {
+            if (temp_teacher->subjects_I_handle.contains(course))
+            {
+                return false;
+            }
+            else
+            {
+                temp_teacher->subjects_I_handle.emplace(course);
+                temp_teacher->subjects_I_handle_const.emplace(
+                    std::make_shared<const Course>(course->get_name(), course->is_active()));
+                return true;
+            }
+        }
+        return false;
     }
 
 private:
     // Person - identified by name and surname (they are unique)
     std::set<std::shared_ptr<Person>> person_set;
+
+    // Set of names and surnames to quickly checking if person is in college.
 
     // Set of names and surnames to quickly checking if person is in college.
     std::set<std::pair<std::string, std::string>> people_names;
@@ -327,12 +449,46 @@ private:
     std::set<std::shared_ptr<Course>> course_set;
 
     // Map needed to quickly find course by its name and change sth in it.
+
+    // Map needed to quickly find course by its name and change sth in it.
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
 
+    class inactive_student_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Incorrect operation for an inactive student.";
+        }
+    };
+
+    class inactive_course_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Incorrect operation on an inactive course.";
+        }
+    };
+
+    class non_existing_person_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Non-existing person.";
+        }
+    };
+
+    class non_existing_course_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Non-existing course.";
+        }
+    };
+
     // Function checks whether given string satisfies pattern that has * and ?
-    bool satisfies_pattern(const std::string &str,
-                           const std::string &pattern) const noexcept
+    bool satisfies_pattern(const std::string& str,
+        const std::string& pattern) const noexcept
     {
         std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
         std::size_t match;
@@ -349,7 +505,7 @@ private:
             // If current character in pattern is ? or pattern character and
             // str character match, we simply do ++ on indexes.
             if (ptrn_idx < ptrn_len && (pattern[ptrn_idx] == '?' ||
-                                        str[str_idx] == pattern[ptrn_idx]))
+                str[str_idx] == pattern[ptrn_idx]))
             {
                 str_idx++;
                 ptrn_idx++;
@@ -430,7 +586,7 @@ inline bool College::add_person<Student>(std::string name, std::string surname, 
     {
         people_names.emplace(std::make_pair(name, surname));
         person_set.emplace(std::make_shared<Student>(name, surname,
-                                                     active));
+            active));
         return true;
     }
     return false;
@@ -459,10 +615,110 @@ inline bool College::add_person<PhDStudent>(std::string name, std::string surnam
     {
         people_names.emplace(std::make_pair(name, surname));
         person_set.emplace(std::make_shared<PhDStudent>(name, surname,
-                                                        active));
+            active));
         return true;
     }
     return false;
+}
+
+template<>
+inline bool College::assign_course<Student>(const std::shared_ptr<Student>& person,
+    const std::shared_ptr<Course>& course)
+{
+    if (!person_set.contains(person))
+    {
+        throw non_existing_person_exception();
+    }
+    else if (!course_set.contains(course))
+    {
+        throw non_existing_course_exception();
+    }
+    if (!course->is_active())
+    {
+        throw inactive_course_exception();
+    }
+    if (!person->is_active())
+    {
+        throw inactive_student_exception();
+    }
+    if (person->subjects_I_attend.contains(course))
+    {
+        return false;
+    }
+    else
+    {
+        person->subjects_I_attend.emplace(course);
+        person->subjects_I_attend_const.emplace(
+            std::make_shared<const Course>(course->get_name(), course->is_active()));
+        return true;
+    }
+    
+    return false;
+}
+
+template<>
+inline bool College::assign_course<Teacher>(const std::shared_ptr<Teacher>& person,
+    const std::shared_ptr<Course>& course)
+{
+    if (!person_set.contains(person))
+    {
+        throw non_existing_person_exception();
+    }
+    else if (!course_set.contains(course))
+    {
+        throw non_existing_course_exception();
+    }
+    if (!course->is_active())
+    {
+        throw inactive_course_exception();
+    }
+    if (person->subjects_I_handle.contains(course))
+    {
+        return false;
+    }
+    else
+    {
+        person->subjects_I_handle.emplace(course);
+        person->subjects_I_handle_const.emplace(
+            std::make_shared<const Course>(course->get_name(), course->is_active()));
+        return true;
+    }
+
+    return false;
+}
+
+template<>
+inline auto College::find<Student>(const std::shared_ptr<Course>& course)
+{
+    std::set<std::shared_ptr<Person>, Person::people_cmp> matching_people;
+    for (auto iter = person_set.begin(); iter != person_set.end();
+        ++iter)
+    {
+        Student* temp = dynamic_cast<Student*>(iter->get());
+        if (temp != nullptr && temp->subjects_I_attend.contains(course))
+        {
+            matching_people.emplace(*iter);
+        }
+    }
+
+    return matching_people;
+}
+
+template<>
+inline auto College::find<Teacher>(const std::shared_ptr<Course>& course)
+{
+    std::set<std::shared_ptr<Person>, Person::people_cmp> matching_people;
+    for (auto iter = person_set.begin(); iter != person_set.end();
+        ++iter)
+    {
+        Teacher* temp = dynamic_cast<Teacher*>(iter->get());
+        if (temp != nullptr && temp->subjects_I_handle.contains(course))
+        {
+            matching_people.emplace(*iter);
+        }
+    }
+
+    return matching_people;
 }
 
 #endif
