@@ -150,6 +150,7 @@ int main()
     // different ptrs to the same subject
     auto ALGEBRA_2 = std::make_shared<Course>("Algebra");
     assert(!college.change_course_activeness(ALGEBRA_2, false));
+    assert(!college.remove_course(ALGEBRA_2));
 
     // We change ALGEBRA activennes, then remove it
     assert(college.change_course_activeness(*all_courses.begin(), false));

@@ -211,22 +211,6 @@ public:
     template <typename T>
     bool add_person(std::string name, std::string surname, bool active = true)
     {
-        if (people_names.find(std::make_pair(name, surname)) ==
-            people_names.end())
-        {
-            people_names.emplace(std::make_pair(name, surname));
-
-            if constexpr (std::is_same<T, Student>::value)
-                person_set.emplace(std::make_shared<Student>(name,
-                                                             surname, active));
-            else if constexpr (std::is_same<T, PhDStudent>::value)
-                person_set.emplace(std::make_shared<PhDStudent>(name,
-                                                                surname, active));
-            else
-                person_set.emplace(std::make_shared<Teacher>(name, surname));
-
-            return true;
-        }
         return false;
     }
 
@@ -248,18 +232,18 @@ public:
     }
 
     template <typename T>
-    auto find(const std::string& name_pattern, const std::string& surname_pattern) const
+    auto find(const std::string &name_pattern, const std::string &surname_pattern) const
     {
         using person_const_sp = std::shared_ptr<const Person>;
 
         // Custom lexicographical comparator for our result set.
         auto name_cmp = [](person_const_sp a, person_const_sp b)
         {
-            if (a->get_surname() != b->get_surname()) 
+            if (a->get_surname() != b->get_surname())
             {
                 return a->get_surname() < b->get_surname();
             }
-            else 
+            else
             {
                 return a->get_name() < b->get_name();
             }
@@ -269,13 +253,14 @@ public:
         std::set<person_const_sp, decltype(name_cmp)> matching_people;
 
         for (auto iter = person_set.begin(); iter != person_set.end();
-            ++iter)
+             ++iter)
         {
             if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-                satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+                satisfies_pattern((*iter)->get_surname(), surname_pattern))
+            {
                 // If dynamic cast succedeed, it means that a person under the iter
                 // matches our generic type T.
-                const T* target = dynamic_cast<const T*>(iter->get());
+                const T *target = dynamic_cast<const T *>(iter->get());
                 if (target != nullptr)
                 {
                     matching_people.emplace(*iter);
@@ -419,5 +404,48 @@ private:
         return false;
     }
 };
+
+// Specializations:
+
+template <>
+inline bool College::add_person<Student>(std::string name, std::string surname, bool active)
+{
+    if (people_names.find(std::make_pair(name, surname)) ==
+        people_names.end())
+    {
+        people_names.emplace(std::make_pair(name, surname));
+        person_set.emplace(std::make_shared<Student>(name, surname,
+                                                     active));
+        return true;
+    }
+    return false;
+}
+
+template <>
+inline bool College::add_person<Teacher>(std::string name, std::string surname, bool active)
+{
+    if (people_names.find(std::make_pair(name, surname)) ==
+        people_names.end())
+    {
+        people_names.emplace(std::make_pair(name, surname));
+        person_set.emplace(std::make_shared<Teacher>(name, surname));
+        return true;
+    }
+    return false;
+}
+
+template <>
+inline bool College::add_person<PhDStudent>(std::string name, std::string surname, bool active)
+{
+    if (people_names.find(std::make_pair(name, surname)) ==
+        people_names.end())
+    {
+        people_names.emplace(std::make_pair(name, surname));
+        person_set.emplace(std::make_shared<PhDStudent>(name, surname,
+                                                        active));
+        return true;
+    }
+    return false;
+}
 
 #endif
