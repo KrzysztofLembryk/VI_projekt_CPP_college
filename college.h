@@ -363,9 +363,17 @@ public:
     bool assign_course(const std::shared_ptr<T>& person, 
         const std::shared_ptr<Course>& course)
     {
-        if (!person_set.contains(person) || !course_set.contains(course))
+        if (!person_set.contains(person))
         {
-            throw generic_exception();
+            throw non_existing_person_exception();
+        }
+        else if (!course_set.contains(course))
+        {
+            throw non_existing_course_exception();
+        }
+        if (!course->is_active())
+        {
+            throw inactive_course_exception();
         }
         Student* temp_student = dynamic_cast<Student*>(person.get());
         Teacher* temp_teacher = dynamic_cast<Teacher*>(person.get());
@@ -589,9 +597,17 @@ template<>
 inline bool College::assign_course<Student>(const std::shared_ptr<Student>& person,
     const std::shared_ptr<Course>& course)
 {
-    if (!person_set.contains(person) || !course_set.contains(course))
+    if (!person_set.contains(person))
     {
-        throw generic_exception();
+        throw non_existing_person_exception();
+    }
+    else if (!course_set.contains(course))
+    {
+        throw non_existing_course_exception();
+    }
+    if (!course->is_active())
+    {
+        throw inactive_course_exception();
     }
     if (!person->is_active())
     {
@@ -616,9 +632,17 @@ template<>
 inline bool College::assign_course<Teacher>(const std::shared_ptr<Teacher>& person,
     const std::shared_ptr<Course>& course)
 {
-    if (!person_set.contains(person) || !course_set.contains(course))
+    if (!person_set.contains(person))
     {
-        throw generic_exception();
+        throw non_existing_person_exception();
+    }
+    else if (!course_set.contains(course))
+    {
+        throw non_existing_course_exception();
+    }
+    if (!course->is_active())
+    {
+        throw inactive_course_exception();
     }
     if (person->subjects_I_handle.contains(course))
     {
