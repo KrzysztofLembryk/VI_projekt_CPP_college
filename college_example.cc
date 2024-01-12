@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <cassert>
 
 int main() {
   // Sprawdzamy dziedziczenie. To nie jest preferowany sposób używania tych klas.
