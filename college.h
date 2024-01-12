@@ -363,6 +363,13 @@ public:
     auto find(const std::shared_ptr<Course> &course)
     {}
 
+    /**
+    * Functions assigns the given course to the given person, as long as both
+    * the person and course are active (person must be active if 
+    * it is a student), and both course and person exist in this 
+    * college object. StudentTeacher concept ensures that this function
+    * will only accept students or teachers (or classes derived from them).
+    */
     template <StudentTeacher T>
     bool assign_course(const std::shared_ptr<T> &person,
                        const std::shared_ptr<Course> &course)
@@ -434,6 +441,7 @@ private:
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
 
+    // Exceptions for differents cases. Naming is self-explanatory.
     class inactive_student_exception : public std::exception
     {
         virtual const char *what() const throw()
@@ -597,6 +605,9 @@ inline bool College::add_person<PhDStudent>(std::string name, std::string surnam
     return false;
 }
 
+// We need assign_course specializations, because PhDStudent is both a teacher
+// and a student, and we need to assign the given course to the correct
+// data structure based on the specialized type.
 template <>
 inline bool College::assign_course<Student>(
     const std::shared_ptr<Student> &person, 
@@ -653,6 +664,9 @@ inline bool College::assign_course<Teacher>(
     return false;
 }
 
+// We need find() specializations because PhDStudent is both a teacher
+// and a student and we want to checkan appropriate data structure
+// for the given course.
 template <>
 inline auto College::find<Student>(const std::shared_ptr<Course> &course)
 {
