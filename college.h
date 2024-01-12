@@ -48,9 +48,15 @@ public:
                                                     surname(s_name) {}
     virtual ~Person() = default;
 
-    virtual std::string get_name() const;
+    virtual std::string get_name() const noexcept
+    {
+        return name;
+    }
 
-    virtual std::string get_surname() const;
+    virtual std::string get_surname() const noexcept
+    {
+        return surname;
+    }
 
 protected:
     // using course_const_sp = std::shared_ptr<Course>;
@@ -68,16 +74,6 @@ private:
     std::string name;
     std::string surname;
 };
-
-std::string Person::get_name() const
-{
-    return name;
-}
-
-std::string Person::get_surname() const
-{
-    return surname;
-}
 
 class Student : public virtual Person
 {
@@ -282,8 +278,15 @@ public:
         return true;
     }
 
+    /**
+     * Function finds people in college that name and surname have given 
+     * patterns and these people are of type T. We use concept IsAcademic here
+     * since we need to ensure that type T has get_surname and get_name methods,
+     * in order not to make many similar outside of class specializations.
+    */
     template <IsAcademic T>
-    auto find(const std::string &name_pattern, const std::string &surname_pattern) const
+    auto find(const std::string &name_pattern, 
+        const std::string &surname_pattern) const
     {
         // Custom lexicographical comparator for our result set. Sorted by 
         // surname then name.
