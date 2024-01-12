@@ -83,7 +83,6 @@ int main()
     std::cout << "Finding Teachers:\n";
     assert(college.find<Teacher>("*", "*").size() == 4);
 
-    
 
     auto jan_kowalski = *college.find<Student>("Jan", "Kowalski").begin();
     auto pawel_kowalski = *college.find<Student>("Pawel", "Kowalski").begin();
