@@ -53,12 +53,12 @@ public:
     virtual std::string get_surname() const;
 
 protected:
-    //using course_const_sp = std::shared_ptr<Course>;
+    // using course_const_sp = std::shared_ptr<Course>;
 
     struct my_cmp
     {
-        bool operator()(const std::shared_ptr<Course> a, 
-            const std::shared_ptr<Course> b)
+        bool operator()(const std::shared_ptr<Course> a,
+                        const std::shared_ptr<Course> b)
         {
             return a->get_name() < b->get_name();
         }
@@ -137,29 +137,39 @@ public:
     friend class College;
 };
 
+/**
+ * We make concept that checks whether given type is one of correct types for
+ * our classes. We need this to implement find(pattern) method easily in one
+ * body without is_same or explicit specializations.
+ */
 template <typename T>
-bool constexpr is_type_correct() {return false;}
+bool constexpr is_type_academic() { return false; }
 
 template <>
-bool constexpr is_type_correct<Person>() {return true;}
+bool constexpr is_type_academic<Person>() { return true; }
 
 template <>
-bool constexpr is_type_correct<Student>() {return true;}
+bool constexpr is_type_academic<Student>() { return true; }
 
 template <>
-bool constexpr is_type_correct<Teacher>() {return true;}
+bool constexpr is_type_academic<Teacher>() { return true; }
 
 template <>
-bool constexpr is_type_correct<PhDStudent>() {return true;}
+bool constexpr is_type_academic<PhDStudent>() { return true; }
 
 template <typename T>
-concept IsAcademic = is_type_correct<T>();
+concept IsAcademic = is_type_academic<T>();
 
 class College
 {
 public:
     College() = default;
 
+    /**
+     * Function checks if course of given name is present in our college
+     * (names of courses are unique), and if not it creates such course and adds
+     * it to set of courses and returns true.
+     */
     bool add_course(const std::string &name, bool active = true)
     {
         if (course_names.find(name) == course_names.end())
@@ -167,13 +177,18 @@ public:
             auto iter_to_inserted_course = course_set.emplace(std::make_shared<Course>(name, active)).first;
 
             course_names.emplace(name, iter_to_inserted_course);
-            // std::cout << "added course: " << name << "\n";
+
             return true;
         }
         return false;
     }
 
-    auto find_courses(const std::string &pattern)
+    /**
+     * Function returns set of shared_ptrs to courses which names satisfy given
+     * pattern. Courses in set are in lexycographic order by their names.
+     * Function does not modify anything in our college.
+     */
+    auto find_courses(const std::string &pattern) const
     {
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
@@ -182,8 +197,8 @@ public:
             return a->get_name() < b->get_name();
         };
 
-        // We need to make a new set, because we want to return shared pointers
-        // that don't allow to modify our courses.
+        // We need to make a new set, cause we can get many different patterns
+        // so each time we have to make new set of found elems and return it.
         std::set<std::shared_ptr<Course>, decltype(my_cmp)> matching_courses;
 
         // course_names = map<course name, iterator to course in course_set>
@@ -191,9 +206,7 @@ public:
              iter++)
         {
             if (satisfies_pattern(iter->first, pattern))
-            {
                 matching_courses.emplace(*(iter->second));
-            }
         }
 
         return matching_courses;
@@ -212,6 +225,12 @@ public:
         return true;
     }
 
+    /**
+     * Function removes given course from our college. Course is found by 
+     * comparing shared ptrs, not courses' names, since we can have two courses 
+     * with the same name, but in different colleges, so looking for course 
+     * using its name would be a mistake. 
+    */
     bool remove_course(const std::shared_ptr<Course> &course) noexcept
     {
         // Erase with iterator throws nothing, find() also throws nothing.
@@ -221,6 +240,7 @@ public:
             return false;
 
         // Firstly we remove name of our course from set of courses names.
+        // We need iterator so that it is noexcept.
         auto iter_str = course_names.find((*iter)->get_name());
         course_names.erase(iter_str);
 
@@ -231,12 +251,24 @@ public:
         return true;
     }
 
+    /**
+     * Function add new person to college if person of given name and surname 
+     * isn't alread present in it. We need specializations since some 
+     * constructors need active parameter while others don't. 
+    */
     template <typename T>
     bool add_person(std::string name, std::string surname, bool active = true)
     {
         return false;
     }
 
+    /**
+     * Function finds given student by comparing shared pointers in college set,
+     * since we can have students of same names but in different colleges.
+     * Function is noexcept because even if dynamic_ptr_cast fails, target type 
+     * is not reference type, so there will be no exception thrown, only 
+     * nullptr returned.
+    */
     bool change_student_activeness(const std::shared_ptr<Student> &student,
                                    bool active) noexcept
     {
@@ -245,10 +277,6 @@ public:
         if (iter == person_set.end())
             return false;
 
-        // std::string s_name =  (*iter)->get_name();
-        // std::string s_surname = (*iter)->get_surname();
-        // auto iter_name = people_names.find(std::make_pair(s_name, s_surname));
-
         std::dynamic_pointer_cast<Student>(*iter)->active = active;
 
         return true;
@@ -256,8 +284,9 @@ public:
 
     template <IsAcademic T>
     auto find(const std::string &name_pattern, const std::string &surname_pattern) const
-    {   
-        // Custom lexicographical comparator for our result set.
+    {
+        // Custom lexicographical comparator for our result set. Sorted by 
+        // surname then name.
         auto name_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b)
         {
             if (a->get_surname() != b->get_surname())
@@ -271,15 +300,15 @@ public:
 
         for (auto iter = person_set.begin(); iter != person_set.end();
              ++iter)
-        {       
+        {
             if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
                 satisfies_pattern((*iter)->get_surname(), surname_pattern))
-            {     
+            {
                 auto found_person = std::dynamic_pointer_cast<T>(*iter);
-                // We need to check if cast was successful meaning != nullptr, 
+                // We need to check if cast was successful meaning != nullptr,
                 // cause we cannot cast i.e. teacher to student. If it was
                 // successful it means that *iter type matches type T.
-                if(found_person != nullptr)
+                if (found_person != nullptr)
                     matching_people.emplace(found_person);
             }
         }
@@ -299,7 +328,7 @@ private:
     // Map needed to quickly find course by its name and change sth in it.
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
-    
+
     // Function checks whether given string satisfies pattern that has * and ?
     bool satisfies_pattern(const std::string &str,
                            const std::string &pattern) const noexcept
@@ -390,7 +419,8 @@ private:
 };
 
 // Specializations:
-
+// We need add_person specialization cause constructors may differ, and in some
+// of them we need to add active, whereas in others we don't.
 template <>
 inline bool College::add_person<Student>(std::string name, std::string surname, bool active)
 {
