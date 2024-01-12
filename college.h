@@ -102,7 +102,8 @@ class Student : public virtual Person
 public:
     Student() = delete;
 
-    Student(std::string name, std::string surname, bool is_active = true) : Person(name, surname), active(is_active) {}
+    Student(std::string name, std::string surname, bool is_active = true) : 
+        Person(name, surname), active(is_active) {}
 
     ~Student() = default;
 
@@ -119,7 +120,8 @@ public:
     friend class College;
 
 protected:
-    std::set<std::shared_ptr<const Course>, my_cmp_const> subjects_I_attend_const;
+    std::set<std::shared_ptr<const Course>, my_cmp_const> 
+        subjects_I_attend_const;
     std::set<std::shared_ptr<Course>, my_cmp> subjects_I_attend;
     bool active;
 };
@@ -143,7 +145,8 @@ public:
     friend class College;
 
 protected:
-    std::set<std::shared_ptr<const Course>, my_cmp_const> subjects_I_handle_const;
+    std::set<std::shared_ptr<const Course>, my_cmp_const> 
+        subjects_I_handle_const;
     std::set<std::shared_ptr<Course>, my_cmp> subjects_I_handle;
 };
 
@@ -201,14 +204,15 @@ public:
 
     /**
      * Function checks if course of given name is present in our college
-     * (names of courses are unique), and if not it creates such course and adds
-     * it to set of courses and returns true.
+     * (names of courses are unique), and if not it creates such 
+     * course and adds it to set of courses and returns true.
      */
     bool add_course(const std::string &name, bool active = true)
     {
         if (course_names.find(name) == course_names.end())
         {
-            auto iter_to_inserted_course = course_set.emplace(std::make_shared<Course>(name, active)).first;
+            auto iter_to_inserted_course = course_set.emplace
+                std::make_shared<Course>(name, active)).first;
 
             course_names.emplace(name, iter_to_inserted_course);
 
@@ -298,8 +302,8 @@ public:
     }
 
     /**
-     * Function finds given student by comparing shared pointers in college set,
-     * since we can have students of same names but in different colleges.
+     * Function finds given student by comparing shared pointers in college 
+     * set, since we can have students of same names but in different colleges.
      * Function is noexcept because even if dynamic_ptr_cast fails, target type
      * is not reference type, so there will be no exception thrown, only
      * nullptr returned.
@@ -320,7 +324,7 @@ public:
     /**
      * Function finds people in college that name and surname have given
      * patterns and these people are of type T. We use concept IsAcademic here
-     * since we need to ensure that type T has get_surname and get_name methods,
+     * since we need to ensure that type T has get_surname and get_name methods
      * in order not to make many similar outside of class specializations.
      */
     template <IsAcademic T>
@@ -402,7 +406,8 @@ public:
             {
                 temp_student->subjects_I_attend.emplace(course);
                 temp_student->subjects_I_attend_const.emplace(
-                    std::make_shared<const Course>(course->get_name(), course->is_active()));
+                    std::make_shared<const Course>(course->get_name(), 
+                        course->is_active()));
                 return true;
             }
         }
@@ -416,7 +421,8 @@ public:
             {
                 temp_teacher->subjects_I_handle.emplace(course);
                 temp_teacher->subjects_I_handle_const.emplace(
-                    std::make_shared<const Course>(course->get_name(), course->is_active()));
+                    std::make_shared<const Course>(course->get_name(),
+                        course->is_active()));
                 return true;
             }
         }
@@ -567,7 +573,8 @@ private:
 // We need add_person specialization cause constructors may differ, and in some
 // of them we need to add active, whereas in others we don't.
 template <>
-inline bool College::add_person<Student>(std::string name, std::string surname, bool active)
+inline bool College::add_person<Student>(std::string name, 
+    std::string surname, bool active)
 {
     if (people_names.find(std::make_pair(name, surname)) == people_names.end())
     {
@@ -579,7 +586,8 @@ inline bool College::add_person<Student>(std::string name, std::string surname, 
 }
 
 template <>
-inline bool College::add_person<Teacher>(std::string name, std::string surname, bool active)
+inline bool College::add_person<Teacher>(std::string name, 
+    std::string surname, bool active)
 {
     active = true;
     if (people_names.find(std::make_pair(name, surname)) == people_names.end())
@@ -593,7 +601,8 @@ inline bool College::add_person<Teacher>(std::string name, std::string surname, 
 }
 
 template <>
-inline bool College::add_person<PhDStudent>(std::string name, std::string surname, bool active)
+inline bool College::add_person<PhDStudent>(std::string name, 
+    std::string surname, bool active)
 {
     if (people_names.find(std::make_pair(name, surname)) == people_names.end())
     {
@@ -657,7 +666,8 @@ inline bool College::assign_course<Teacher>(
     {
         person->subjects_I_handle.emplace(course);
         person->subjects_I_handle_const.emplace(
-            std::make_shared<const Course>(course->get_name(), course->is_active()));
+            std::make_shared<const Course>(course->get_name(), 
+                course->is_active()));
         return true;
     }
 
