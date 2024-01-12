@@ -56,7 +56,7 @@ protected:
 
     struct my_cmp
     {
-        bool operator()(course_const_sp a, course_const_sp b)
+        bool operator()(const course_const_sp &a, const course_const_sp &b)
         {
             return a->get_name() < b->get_name();
         }
@@ -281,23 +281,7 @@ private:
     // std::set<const std::shared_ptr<Course>> course_const_set;
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
-
-    // Custom lexicographical comparator for our result set.
-    struct name_cmp
-    {
-        bool operator()(std::shared_ptr<Person> a, std::shared_ptr<Person> b)
-        {
-            if (a->get_surname() != b->get_surname())
-            {
-                return a->get_surname() < b->get_surname();
-            }
-            else
-            {
-                return a->get_name() < b->get_name();
-            }
-        }
-    };
-
+   
     bool satisfies_pattern(const std::string &str,
                            const std::string &pattern) const noexcept
     {
@@ -414,7 +398,7 @@ inline bool College::add_person<Teacher>(std::string name, std::string surname, 
 
         return active;
     }
-    return !active;
+    return false;
 }
 
 template <>
@@ -436,48 +420,51 @@ inline bool College::add_person<PhDStudent>(std::string name, std::string surnam
 template <>
 inline auto College::find<Student>(const std::string &name_pattern, const std::string &surname_pattern) const
 {
-    using person_const_sp = std::shared_ptr<Student>;
+    auto name_cmp = [](std::shared_ptr<Student> a, std::shared_ptr<Student> b)
+    {
+        if (a->get_surname() != b->get_surname())
+            return a->get_surname() < b->get_surname();
+        else
+            return a->get_name() < b->get_name();
+    };
 
-        // Custom lexicographical comparator for our result set.
-        // Result set.
-        std::set<person_const_sp, name_cmp> matching_people;
+    std::set<std::shared_ptr<Student>, decltype(name_cmp)> matching_people;
 
-        for (auto iter = person_set.begin(); iter != person_set.end();
-             ++iter)
+    for (auto iter = person_set.begin(); iter != person_set.end();
+         ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern))
         {
-            if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-                satisfies_pattern((*iter)->get_surname(), surname_pattern))
-            {
-                
-                
-                matching_people.emplace(std::dynamic_pointer_cast<Student>
-                    (*iter));
-            }
+            matching_people.insert(std::dynamic_pointer_cast<Student>(*iter));
         }
+    }
     return matching_people;
 }
 
 template <>
 inline auto College::find<Teacher>(const std::string &name_pattern, const std::string &surname_pattern) const
 {
-    using person_const_sp = std::shared_ptr<Teacher>;
+    auto name_cmp = [](std::shared_ptr<Teacher> a, std::shared_ptr<Teacher> b)
+    {
+        if (a->get_surname() != b->get_surname())
+            return a->get_surname() < b->get_surname();
+        else
+            return a->get_name() < b->get_name();
+    };
 
-        // Custom lexicographical comparator for our result set.
-        // Result set.
-        std::set<person_const_sp, name_cmp> matching_people;
 
-        for (auto iter = person_set.begin(); iter != person_set.end();
-             ++iter)
+    std::set<std::shared_ptr<Teacher>, decltype(name_cmp)> matching_people;
+
+    for (auto iter = person_set.begin(); iter != person_set.end();
+         ++iter)
+    {
+        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+            satisfies_pattern((*iter)->get_surname(), surname_pattern))
         {
-            if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-                satisfies_pattern((*iter)->get_surname(), surname_pattern))
-            {
-                
-                
-                matching_people.emplace(std::dynamic_pointer_cast<Teacher>
-                    (*iter));
-            }
+            matching_people.emplace(std::dynamic_pointer_cast<Teacher>(*iter));
         }
+    }
     return matching_people;
 }
 
