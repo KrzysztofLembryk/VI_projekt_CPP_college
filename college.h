@@ -274,8 +274,7 @@ public:
         {       
             if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
                 satisfies_pattern((*iter)->get_surname(), surname_pattern))
-            {
-                    
+            {     
                 auto found_person = std::dynamic_pointer_cast<T>(*iter);
                 // We need to check if cast was successful meaning != nullptr, 
                 // cause we cannot cast i.e. teacher to student. If it was
@@ -284,22 +283,24 @@ public:
                     matching_people.emplace(found_person);
             }
         }
-        
         return matching_people;
     }
 
 private:
     // Person - identified by name and surname (they are unique)
     std::set<std::shared_ptr<Person>> person_set;
-    // std::set<const std::shared_ptr<Person>> person_const_set;
+
+    // Set of names and surnames to quickly checking if person is in college.
     std::set<std::pair<std::string, std::string>> people_names;
 
     // Course - identified by its name (name is unique)
     std::set<std::shared_ptr<Course>> course_set;
-    // std::set<const std::shared_ptr<Course>> course_const_set;
+
+    // Map needed to quickly find course by its name and change sth in it.
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
-   
+    
+    // Function checks whether given string satisfies pattern that has * and ?
     bool satisfies_pattern(const std::string &str,
                            const std::string &pattern) const noexcept
     {
