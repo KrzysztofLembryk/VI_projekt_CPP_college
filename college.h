@@ -37,8 +37,6 @@ private:
     bool active;
 };
 
-// Klasa Person jest wirtualna, bo nie mozemy stworzyc obiektu po prostu typu
-// osoba. Ale zapewniamy implementacje getterow, zeby nie duplikowac kodu.
 class Person
 {
 public:
