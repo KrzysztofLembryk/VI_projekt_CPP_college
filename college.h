@@ -9,6 +9,7 @@
 #include <memory>
 #include <regex>
 #include <concepts>
+#include <exception>
 
 class Course
 {
@@ -62,7 +63,16 @@ protected:
     struct my_cmp
     {
         bool operator()(const std::shared_ptr<Course> a,
-            const std::shared_ptr<Course> b)
+            const std::shared_ptr<Course> b) const
+        {
+            return a->get_name() < b->get_name();
+        }
+    };
+
+    struct my_cmp_const
+    {
+        bool operator()(const std::shared_ptr<const Course> a,
+            const std::shared_ptr<const Course> b) const
         {
             return a->get_name() < b->get_name();
         }
@@ -89,13 +99,14 @@ public:
 
     const auto& get_courses() const
     {
-        return subjects_I_attend;
+        return subjects_I_attend_const;
     }
 
     friend class College;
 
 protected:
-    std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_attend;
+    std::set<std::shared_ptr<const Course>, my_cmp_const> subjects_I_attend_const;
+    std::set<std::shared_ptr<Course>, my_cmp> subjects_I_attend;
     bool active;
 };
 
@@ -110,13 +121,14 @@ public:
 
     const auto& get_courses() const
     {
-        return subjects_I_handle;
+        return subjects_I_handle_const;
     }
 
     friend class College;
 
 protected:
-    std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_handle;
+    std::set<std::shared_ptr<const Course>, my_cmp_const> subjects_I_handle_const;
+    std::set<std::shared_ptr<Course>, my_cmp> subjects_I_handle;
 };
 
 class PhDStudent : public Student, public Teacher
@@ -153,6 +165,18 @@ bool constexpr is_type_academic<PhDStudent>() { return true; }
 
 template <typename T>
 concept IsAcademic = is_type_academic<T>();
+
+template <typename T>
+bool constexpr is_student_teacher() { return false; }
+
+template <>
+bool constexpr is_student_teacher<Student>() { return true; }
+
+template <>
+bool constexpr is_student_teacher<Teacher>() { return true; }
+
+template <typename T>
+concept StudentTeacher = is_student_teacher<T>();
 
 class College
 {
@@ -316,6 +340,51 @@ public:
         return matching_people;
     }
 
+    template <StudentTeacher T>
+    bool assign_course(const std::shared_ptr<T>& person, 
+        const std::shared_ptr<Course>& course)
+    {
+        if (!person_set.contains(person) || !course_set.contains(course))
+        {
+            throw generic_exception();
+        }
+        Student* temp_student = dynamic_cast<Student*>(person.get());
+        Teacher* temp_teacher = dynamic_cast<Teacher*>(person.get());
+        if (temp_student != nullptr)
+        {
+            if (!temp_student->is_active())
+            {
+                throw generic_exception();
+            }
+            if (temp_student->subjects_I_attend.contains(course))
+            {
+                return false;
+            }
+            else
+            {
+                temp_student->subjects_I_attend.emplace(course);
+                //temp_student->subjects_I_attend_const.emplace(
+                  //  std::make_shared<const Course>(course->get_name(), course->is_active()));
+                return true;
+            }
+        }
+        else if (temp_teacher != nullptr)
+        {
+            if (temp_teacher->subjects_I_handle.contains(course))
+            {
+                return false;
+            }
+            else
+            {
+                temp_teacher->subjects_I_handle.emplace(course);
+                //temp_teacher->subjects_I_handle_const.emplace(
+                  //  std::make_shared<const Course>(course->get_name(), course->is_active()));
+                return true;
+            }
+        }
+        return false;
+    }
+
 private:
     // Person - identified by name and surname (they are unique)
     std::set<std::shared_ptr<Person>> person_set;
@@ -329,6 +398,14 @@ private:
     // Map needed to quickly find course by its name and change sth in it.
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
+
+    class generic_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Ugabuga\n";
+        }
+    };
 
     // Function checks whether given string satisfies pattern that has * and ?
     bool satisfies_pattern(const std::string& str,
