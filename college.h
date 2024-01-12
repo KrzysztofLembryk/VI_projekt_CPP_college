@@ -249,6 +249,45 @@ public:
         return true;
     }
 
+    template <typename T>
+    auto find(const std::string& name_pattern, const std::string& surname_pattern) const
+    {
+        using person_const_sp = std::shared_ptr<const Person>;
+
+        // Custom lexicographical comparator for our result set.
+        auto name_cmp = [](person_const_sp a, person_const_sp b)
+        {
+            if (a->get_surname() != b->get_surname()) 
+            {
+                return a->get_surname() < b->get_surname();
+            }
+            else 
+            {
+                return a->get_name() < b->get_name();
+            }
+        };
+
+        // Result set.
+        std::set<person_const_sp, decltype(name_cmp)> matching_people;
+
+        for (auto iter = person_set.begin(); iter != person_set.end();
+            ++iter)
+        {
+            if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+                satisfies_pattern((*iter)->get_surname(), surname_pattern)) {
+                // If dynamic cast succedeed, it means that a person under the iter
+                // matches our generic type T.
+                const T* target = dynamic_cast<const T*>(iter->get());
+                if (target != nullptr)
+                {
+                    matching_people.emplace(*iter);
+                }
+            }
+        }
+
+        return matching_people;
+    }
+
 private:
     // Person - identified by name and surname (they are unique)
     std::set<std::shared_ptr<Person>> person_set;
