@@ -9,6 +9,9 @@
 #include <memory>
 #include <regex>
 
+
+
+
 class Course
 {
 public:
@@ -52,11 +55,12 @@ public:
     virtual std::string get_surname() const;
 
 protected:
-    using course_const_sp = std::shared_ptr<Course>;
+    //using course_const_sp = std::shared_ptr<Course>;
 
     struct my_cmp
     {
-        bool operator()(const course_const_sp &a, const course_const_sp &b)
+        bool operator()(const std::shared_ptr<Course> a, 
+            const std::shared_ptr<Course> b)
         {
             return a->get_name() < b->get_name();
         }
@@ -117,6 +121,8 @@ public:
         return subjects_I_handle;
     }
 
+    friend class College;
+
 protected:
     std::set<std::shared_ptr<const Course>, my_cmp> subjects_I_handle;
 };
@@ -130,7 +136,26 @@ public:
                bool is_active = true) : Person(name, surname),
                                         Student(name, surname, is_active),
                                         Teacher(name, surname) {}
+    friend class College;
 };
+
+template <typename T>
+bool constexpr is_type_correct() {return false;}
+
+template <>
+bool constexpr is_type_correct<Person>() {return true;}
+
+template <>
+bool constexpr is_type_correct<Student>() {return true;}
+
+template <>
+bool constexpr is_type_correct<Teacher>() {return true;}
+
+template <>
+bool constexpr is_type_correct<PhDStudent>() {return true;}
+
+template <typename T>
+concept IsAcademic = is_type_correct<T>();
 
 class College
 {
@@ -231,43 +256,43 @@ public:
         return true;
     }
 
-    template <typename T>
+    template <IsAcademic T>
     auto find(const std::string &name_pattern, const std::string &surname_pattern) const
     {
-        // using person_const_sp = std::shared_ptr<Person>;
+        using person_const_sp = std::shared_ptr<T>;
 
-        // // Custom lexicographical comparator for our result set.
-        // auto name_cmp = [](person_const_sp a, person_const_sp b)
-        // {
-        //     if (a->get_surname() != b->get_surname())
-        //     {
-        //         return a->get_surname() < b->get_surname();
-        //     }
-        //     else
-        //     {
-        //         return a->get_name() < b->get_name();
-        //     }
-        // };
-        // // Result set.
-        // std::set<person_const_sp, decltype(my_cmp)> matching_people;
+        // Custom lexicographical comparator for our result set.
+        auto name_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b)
+        {
+            if (a->get_surname() != b->get_surname())
+            {
+                return a->get_surname() < b->get_surname();
+            }
+            else
+            {
+                return a->get_name() < b->get_name();
+            }
+        };
+        // Result set.
+        std::set<person_const_sp, decltype(name_cmp)> matching_people;
 
-        // for (auto iter = person_set.begin(); iter != person_set.end();
-        //      ++iter)
-        // {
-        //     if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-        //         satisfies_pattern((*iter)->get_surname(), surname_pattern))
-        //     {
-        //         // If dynamic cast succedeed, it means that a person under the iter
-        //         // matches our generic type T.
-        //         const T *target = dynamic_cast<const T *>(iter->get());
-        //         if (target != nullptr)
-        //         {
-        //             matching_people.emplace(*iter);
-        //         }
-        //     }
-        // }
+        for (auto iter = person_set.begin(); iter != person_set.end();
+             ++iter)
+        {
+            if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+                satisfies_pattern((*iter)->get_surname(), surname_pattern))
+            {
+                // If dynamic cast succedeed, it means that a person under the iter
+                // matches our generic type T.
+                // const T *target = dynamic_cast<const T *>(iter->get());
+                // if (target != nullptr)
+                // {
+                    matching_people.emplace(std::dynamic_pointer_cast<T>(*iter));
+                //}
+            }
+        }
 
-        // return matching_people;
+        return matching_people;
     }
 
 private:
@@ -417,55 +442,54 @@ inline bool College::add_person<PhDStudent>(std::string name, std::string surnam
 
 // Find specialization
 
-template <>
-inline auto College::find<Student>(const std::string &name_pattern, const std::string &surname_pattern) const
-{
-    auto name_cmp = [](std::shared_ptr<Student> a, std::shared_ptr<Student> b)
-    {
-        if (a->get_surname() != b->get_surname())
-            return a->get_surname() < b->get_surname();
-        else
-            return a->get_name() < b->get_name();
-    };
+// template <>
+// inline auto College::find<Student>(const std::string &name_pattern, const std::string &surname_pattern) const
+// {
+//     auto name_cmp = [](std::shared_ptr<Person> a, std::shared_ptr<Person> b)
+//     {
+//         if (a->get_surname() != b->get_surname())
+//             return a->get_surname() < b->get_surname();
+//         else
+//             return a->get_name() < b->get_name();
+//     };
 
-    std::set<std::shared_ptr<Student>, decltype(name_cmp)> matching_people;
+//     std::set<std::shared_ptr<Student>, decltype(name_cmp)> matching_people;
 
-    for (auto iter = person_set.begin(); iter != person_set.end();
-         ++iter)
-    {
-        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-            satisfies_pattern((*iter)->get_surname(), surname_pattern))
-        {
-            matching_people.insert(std::dynamic_pointer_cast<Student>(*iter));
-        }
-    }
-    return matching_people;
-}
+//     for (auto iter = person_set.begin(); iter != person_set.end();
+//          ++iter)
+//     {
+//         if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+//             satisfies_pattern((*iter)->get_surname(), surname_pattern))
+//         {
+//             matching_people.insert(std::dynamic_pointer_cast<Student>(*iter));
+//         }
+//     }
+//     return matching_people;
+// }
 
-template <>
-inline auto College::find<Teacher>(const std::string &name_pattern, const std::string &surname_pattern) const
-{
-    auto name_cmp = [](std::shared_ptr<Teacher> a, std::shared_ptr<Teacher> b)
-    {
-        if (a->get_surname() != b->get_surname())
-            return a->get_surname() < b->get_surname();
-        else
-            return a->get_name() < b->get_name();
-    };
+// template <>
+// inline auto College::find<Teacher>(const std::string &name_pattern, const std::string &surname_pattern) const
+// {
+//     auto name_cmp = [](std::shared_ptr<Person> a, std::shared_ptr<Person> b)
+//     {
+//         if (a->get_surname() != b->get_surname())
+//             return a->get_surname() < b->get_surname();
+//         else
+//             return a->get_name() < b->get_name();
+//     };
 
+//     std::set<std::shared_ptr<Teacher>, decltype(name_cmp)> matching_people;
 
-    std::set<std::shared_ptr<Teacher>, decltype(name_cmp)> matching_people;
-
-    for (auto iter = person_set.begin(); iter != person_set.end();
-         ++iter)
-    {
-        if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
-            satisfies_pattern((*iter)->get_surname(), surname_pattern))
-        {
-            matching_people.emplace(std::dynamic_pointer_cast<Teacher>(*iter));
-        }
-    }
-    return matching_people;
-}
+//     for (auto iter = person_set.begin(); iter != person_set.end();
+//          ++iter)
+//     {
+//         if (satisfies_pattern((*iter)->get_name(), name_pattern) &&
+//             satisfies_pattern((*iter)->get_surname(), surname_pattern))
+//         {
+//             matching_people.emplace(std::dynamic_pointer_cast<Teacher>(*iter));
+//         }
+//     }
+//     return matching_people;
+// }
 
 #endif
