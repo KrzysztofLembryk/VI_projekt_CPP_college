@@ -211,7 +211,7 @@ public:
     {
         if (course_names.find(name) == course_names.end())
         {
-            auto iter_to_inserted_course = course_set.emplace
+            auto iter_to_inserted_course = course_set.emplace(
                 std::make_shared<Course>(name, active)).first;
 
             course_names.emplace(name, iter_to_inserted_course);
@@ -379,29 +379,19 @@ public:
                        const std::shared_ptr<Course> &course)
     {
         if (!person_set.contains(person))
-        {
             throw non_existing_person_exception();
-        }
         else if (!course_set.contains(course))
-        {
             throw non_existing_course_exception();
-        }
         if (!course->is_active())
-        {
             throw inactive_course_exception();
-        }
         Student *temp_student = dynamic_cast<Student *>(person.get());
         Teacher *temp_teacher = dynamic_cast<Teacher *>(person.get());
         if (temp_student != nullptr)
         {
             if (!temp_student->is_active())
-            {
                 throw inactive_student_exception();
-            }
             if (temp_student->subjects_I_attend.contains(course))
-            {
                 return false;
-            }
             else
             {
                 temp_student->subjects_I_attend.emplace(course);
@@ -414,9 +404,7 @@ public:
         else if (temp_teacher != nullptr)
         {
             if (temp_teacher->subjects_I_handle.contains(course))
-            {
                 return false;
-            }
             else
             {
                 temp_teacher->subjects_I_handle.emplace(course);
@@ -450,7 +438,7 @@ private:
     // Exceptions for differents cases. Naming is self-explanatory.
     class inactive_student_exception : public std::exception
     {
-        virtual const char *what() const throw()
+        virtual const char* what() const throw()
         {
             return "Incorrect operation for an inactive student.";
         }
@@ -458,7 +446,7 @@ private:
 
     class inactive_course_exception : public std::exception
     {
-        virtual const char *what() const throw()
+        virtual const char* what() const throw()
         {
             return "Incorrect operation on an inactive course.";
         }
@@ -466,7 +454,7 @@ private:
 
     class non_existing_person_exception : public std::exception
     {
-        virtual const char *what() const throw()
+        virtual const char* what() const throw()
         {
             return "Non-existing person.";
         }
@@ -474,7 +462,7 @@ private:
 
     class non_existing_course_exception : public std::exception
     {
-        virtual const char *what() const throw()
+        virtual const char* what() const throw()
         {
             return "Non-existing course.";
         }
