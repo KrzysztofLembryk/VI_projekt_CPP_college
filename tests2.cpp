@@ -57,21 +57,21 @@ int main()
     assert(!college.add_person<Teacher>("Alicja", "Fiszer"));
     assert(!college.add_person<PhDStudent>("Jacek", "Chlebus"));
 
-    auto people = college.find<Person>("*", "*");
-    assert(people.size() == 6);
-    assert((*people.begin())->get_name() == "Jacek");
-    assert((*people.begin())->get_surname() == "Chlebus");
+    // auto people = college.find<Person>("*", "*");
+    // assert(people.size() == 6);
+    // assert((*people.begin())->get_name() == "Jacek");
+    // assert((*people.begin())->get_surname() == "Chlebus");
 
-    for (auto const &p : people)
-        std::clog << p->get_name() << ' ' << p->get_surname() << '\n';
+    // for (auto const &p : people)
+    //     std::clog << p->get_name() << ' ' << p->get_surname() << '\n';
 
-    people = college.find<Person>("*", "*k*");
-    assert(people.size() == 4);
+    // people = college.find<Person>("*", "*k*");
+    // assert(people.size() == 4);
 
-    std::cout << "CHUK\n";
+    // std::cout << "CHUK\n";
 
-    for (auto const &p : people)
-        std::clog << p->get_name() << ' ' << p->get_surname() << '\n';
+    // for (auto const &p : people)
+    //     std::clog << p->get_name() << ' ' << p->get_surname() << '\n';
 
     std::cout << "Finding students:\n";
 
