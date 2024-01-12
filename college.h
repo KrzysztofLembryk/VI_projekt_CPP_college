@@ -373,7 +373,7 @@ public:
         {
             if (!temp_student->is_active())
             {
-                throw generic_exception();
+                throw inactive_student_exception();
             }
             if (temp_student->subjects_I_attend.contains(course))
             {
@@ -418,11 +418,35 @@ private:
     std::map<std::string, std::set<std::shared_ptr<Course>>::iterator>
         course_names;
 
-    class generic_exception : public std::exception
+    class inactive_student_exception : public std::exception
     {
         virtual const char* what() const throw()
         {
-            return "Ugabuga\n";
+            return "Incorrect operation for an inactive student.";
+        }
+    };
+
+    class inactive_course_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Incorrect operation on an inactive course.";
+        }
+    };
+
+    class non_existing_person_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Non-existing person.";
+        }
+    };
+
+    class non_existing_course_exception : public std::exception
+    {
+        virtual const char* what() const throw()
+        {
+            return "Non-existing course.";
         }
     };
 
@@ -571,7 +595,7 @@ inline bool College::assign_course<Student>(const std::shared_ptr<Student>& pers
     }
     if (!person->is_active())
     {
-        throw generic_exception();
+        throw inactive_student_exception();
     }
     if (person->subjects_I_attend.contains(course))
     {
