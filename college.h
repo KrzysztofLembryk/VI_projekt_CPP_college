@@ -671,7 +671,16 @@ inline auto College::find<Student>(const std::shared_ptr<Course> &course)
         Student *temp = dynamic_cast<Student *>(iter->get());
         if (temp != nullptr && temp->subjects_I_attend.contains(course))
         {
-            matching_people.emplace(*iter);
+            for (auto iter2 = temp->subjects_I_attend.begin(); 
+                iter2 != temp->subjects_I_attend.end();
+                ++iter2)
+            {
+                if ((*iter2) == course)
+                {
+                    matching_people.emplace(*iter);
+                    break;
+                }
+            }
         }
     }
 
@@ -688,7 +697,16 @@ inline auto College::find<Teacher>(const std::shared_ptr<Course> &course)
         Teacher *temp = dynamic_cast<Teacher *>(iter->get());
         if (temp != nullptr && temp->subjects_I_handle.contains(course))
         {
-            matching_people.emplace(*iter);
+            for (auto iter2 = temp->subjects_I_handle.begin();
+                iter2 != temp->subjects_I_handle.end();
+                ++iter2)
+            {
+                if ((*iter2) == course)
+                {
+                    matching_people.emplace(*iter);
+                    break;
+                }
+            }
         }
     }
 
