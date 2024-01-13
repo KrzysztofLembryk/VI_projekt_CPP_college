@@ -1,13 +1,9 @@
 #ifndef COLLEGE_H
 #define COLLEGE_H
 
-#include <string>
-#include <iostream>
 #include <map>
 #include <set>
 #include <memory>
-#include <concepts>
-#include <exception>
 
 class Course
 {
@@ -659,7 +655,7 @@ inline bool College::assign_course<Teacher>(
 }
 
 // We need find() specializations because PhDStudent is both a teacher
-// and a student and we want to checkan appropriate data structure
+// and a student and we want to check an appropriate data structure
 // for the given course.
 template <>
 inline auto College::find<Student>(const std::shared_ptr<Course> &course)
