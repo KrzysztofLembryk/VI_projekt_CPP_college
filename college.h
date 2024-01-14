@@ -4,7 +4,6 @@
 #include <map>
 #include <set>
 #include <memory>
-#include <string>
 
 class Course
 {
