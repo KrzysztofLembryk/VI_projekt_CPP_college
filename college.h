@@ -4,12 +4,13 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <string>
 
 class Course
 {
 public:
     Course() = delete;
-    Course(std::string name, bool is_active = true) : course_name(name),
+    Course(const std::string &name, bool is_active = true) : course_name(name),
                                                       active(is_active) {}
 
     std::string get_name() const noexcept
@@ -37,7 +38,7 @@ class Person
 public:
     Person() = delete;
 
-    Person(std::string _name, std::string s_name) : name(_name),
+    Person(const std::string &_name, const std::string &s_name) : name(_name),
                                                     surname(s_name) {}
     virtual ~Person() = default;
 
@@ -98,10 +99,10 @@ class Student : public virtual Person
 public:
     Student() = delete;
 
-    Student(std::string name, std::string surname, bool is_active = true) : 
-        Person(name, surname), active(is_active) {}
+    Student(const std::string &name, const std::string &surname, 
+        bool is_active = true) : Person(name, surname), active(is_active) {}
 
-    ~Student() = default;
+    virtual ~Student() = default;
 
     bool is_active() const noexcept
     {
@@ -127,9 +128,10 @@ class Teacher : public virtual Person
 public:
     Teacher() = delete;
 
-    Teacher(std::string name, std::string surname) : Person(name, surname) {}
+    Teacher(const std::string &name, const std::string &surname) : 
+        Person(name, surname) {}
 
-    ~Teacher() = default;
+    virtual ~Teacher() = default;
 
     const auto &get_courses() const
     {
@@ -151,10 +153,11 @@ class PhDStudent : public Student, public Teacher
 public:
     PhDStudent() = delete;
     // Thanks to virtual inheritance, Person constructor invoked only once.
-    PhDStudent(std::string name, std::string surname,
+    PhDStudent(const std::string &name, const std::string &surname,
                bool is_active = true) : Person(name, surname),
                                         Student(name, surname, is_active),
                                         Teacher(name, surname) {}
+    virtual ~PhDStudent() = default;
     friend class College;
 };
 
@@ -292,7 +295,7 @@ public:
      * constructors need active parameter while others don't.
      */
     template <typename T>
-    bool add_person(std::string name, std::string surname, bool active = true);
+    bool add_person(const std::string &name, const std::string &surname, bool active = true);
 
     /**
      * Function finds given student by comparing shared pointers in college 
@@ -553,8 +556,8 @@ private:
 // We need add_person specialization cause constructors may differ, and in some
 // of them we need to add active, whereas in others we don't.
 template <>
-inline bool College::add_person<Student>(std::string name, 
-    std::string surname, bool active)
+inline bool College::add_person<Student>(const std::string &name, 
+    const std::string &surname, bool active)
 {
     if (people_names.find(std::make_pair(name, surname)) == people_names.end())
     {
@@ -566,8 +569,8 @@ inline bool College::add_person<Student>(std::string name,
 }
 
 template <>
-inline bool College::add_person<Teacher>(std::string name, 
-    std::string surname, bool active)
+inline bool College::add_person<Teacher>(const std::string &name, 
+    const std::string &surname, bool active)
 {
     active = true;
     if (people_names.find(std::make_pair(name, surname)) == people_names.end())
@@ -581,8 +584,8 @@ inline bool College::add_person<Teacher>(std::string name,
 }
 
 template <>
-inline bool College::add_person<PhDStudent>(std::string name, 
-    std::string surname, bool active)
+inline bool College::add_person<PhDStudent>(const std::string &name, 
+    const std::string &surname, bool active)
 {
     if (people_names.find(std::make_pair(name, surname)) == people_names.end())
     {
