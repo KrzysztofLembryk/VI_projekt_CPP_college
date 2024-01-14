@@ -228,7 +228,7 @@ public:
     {
         // We need custom comparator for our set, since we want our courses
         // in lexycographic order given by their names.
-        auto my_cmp = [](std::shared_ptr<Course> a, std::shared_ptr<Course> b)
+        auto my_cmp = [](const std::shared_ptr<Course> &a, const std::shared_ptr<Course> &b)
         {
             return a->get_name() < b->get_name();
         };
@@ -329,7 +329,8 @@ public:
         // Custom lexicographical comparator for our result set. Sorted by
         // surname then name.
 
-        auto name_cmp = [](std::shared_ptr<T> a, std::shared_ptr<T> b)
+        auto name_cmp = [](const std::shared_ptr<T> &a,
+             const std::shared_ptr<T> &b)
         {
             if (a->get_surname() != b->get_surname())
                 return a->get_surname() < b->get_surname();
