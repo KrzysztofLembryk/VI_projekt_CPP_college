@@ -56,8 +56,8 @@ protected:
 
     struct people_cmp
     {
-        bool operator()(const std::shared_ptr<Person> a,
-                        const std::shared_ptr<Person> b) const
+        bool operator()(const std::shared_ptr<Person> &a,
+                        const std::shared_ptr<Person> &b) const
         {
             if (a->get_name() != b->get_name())
             {
@@ -72,8 +72,8 @@ protected:
 
     struct my_cmp
     {
-        bool operator()(const std::shared_ptr<Course> a,
-                        const std::shared_ptr<Course> b) const
+        bool operator()(const std::shared_ptr<Course> &a,
+                        const std::shared_ptr<Course> &b) const
         {
             return a->get_name() < b->get_name();
         }
@@ -81,8 +81,8 @@ protected:
 
     struct my_cmp_const
     {
-        bool operator()(const std::shared_ptr<const Course> a,
-                        const std::shared_ptr<const Course> b) const
+        bool operator()(const std::shared_ptr<const Course> &a,
+                        const std::shared_ptr<const Course> &b) const
         {
             return a->get_name() < b->get_name();
         }
