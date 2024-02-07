@@ -6,6 +6,8 @@
 #include <memory>
 #include <sstream>
 
+#define TEST_NUM 501
+
 namespace {
 
 #if TEST_NUM == 101

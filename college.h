@@ -391,8 +391,7 @@ public:
             {
                 temp_student->subjects_I_attend.emplace(course);
                 temp_student->subjects_I_attend_const.emplace(
-                    std::make_shared<const Course>(course->get_name(), 
-                        course->is_active()));
+                    std::make_shared<const Course>(course));
                 return true;
             }
         }
@@ -404,8 +403,7 @@ public:
             {
                 temp_teacher->subjects_I_handle.emplace(course);
                 temp_teacher->subjects_I_handle_const.emplace(
-                    std::make_shared<const Course>(course->get_name(),
-                        course->is_active()));
+                    std::make_shared<const Course>(course));
                 return true;
             }
         }
@@ -468,14 +466,11 @@ private:
                            const std::string &pattern) const noexcept
     {
         std::size_t str_idx, ptrn_idx, ptrn_len, str_len;
-        std::size_t match;
-        int start_Asterisk_Idx;
+        int last_wildcard = -1, backtrack_idx = -1, next_wildcard = -1;
 
         str_idx = ptrn_idx = 0;
         ptrn_len = pattern.size();
         str_len = str.size();
-        match = 0;
-        start_Asterisk_Idx = -1;
 
         while (str_idx < str_len)
         {
@@ -489,27 +484,13 @@ private:
             }
             else if (ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
             {
-                // **...** == *
-                while (ptrn_idx < ptrn_len && pattern[ptrn_idx] == '*')
-                    ptrn_idx++;
-
-                ptrn_idx--;
-
-                // If special character * is the last character in pattern
-                // we return true, since it means that all not checked
-                // characters we have in str are good.
-                if (ptrn_idx == ptrn_len - 1)
-                    return true;
-
-                // We remember idx of last found *, and idx in str when we
-                // found *, we want to be able to come back to them when we
-                // won't find a match in first if, or we won't find another *.
-                start_Asterisk_Idx = ptrn_idx;
-                match = str_idx;
-
-                ptrn_idx++;
+                last_wildcard = ptrn_idx;
+                next_wildcard = ++ptrn_idx;
+                backtrack_idx = str_idx;
             }
-            else if (start_Asterisk_Idx != -1)
+            else if (last_wildcard == -1)
+                return false;
+            else
             {
                 // We didnt find match between str and pattern, also we didnt
                 // find another *, so we need to come back to previous * that
@@ -525,30 +506,19 @@ private:
                 // now match = 3 so currently * = Bio
                 // 7) o != l so match++, str_idx = match, * = Biol
                 // 8) o == o, 9) ? == g, 10) y == y
-                match++;
-                str_idx = match;
-                ptrn_idx = start_Asterisk_Idx + 1;
-            }
-            else
-            {
-                return false;
+                ptrn_idx = next_wildcard;
+                str_idx = ++backtrack_idx;
             }
         }
 
         // Pattern can be longer than our string so we need to check if in this
         // pattern there arent any characters apart from ? and *.
-        while (ptrn_idx < ptrn_len)
+        for(std::size_t i = ptrn_idx; i < ptrn_len; i++)
         {
-            if (pattern[ptrn_idx] != '*' && pattern[ptrn_idx] != '?')
-                return false;
-            ptrn_idx++;
+            if(pattern[i] != '*')
+                 return false;
         }
-
-        // If there are no unchecked characters left in str we found pattern.
-        if (str_idx == str_len)
-            return true;
-
-        return false;
+        return true;
     }
 };
 
@@ -621,9 +591,7 @@ inline bool College::assign_course<Student>(
     else
     {
         person->subjects_I_attend.emplace(course);
-        person->subjects_I_attend_const.emplace(
-            std::make_shared<const Course>(course->get_name(), 
-            course->is_active()));
+        person->subjects_I_attend_const.emplace(course);
         return true;
     }
 
@@ -648,9 +616,7 @@ inline bool College::assign_course<Teacher>(
     else
     {
         person->subjects_I_handle.emplace(course);
-        person->subjects_I_handle_const.emplace(
-            std::make_shared<const Course>(course->get_name(), 
-                course->is_active()));
+        person->subjects_I_handle_const.emplace(course);
         return true;
     }
 
